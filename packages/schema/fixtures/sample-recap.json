@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "id": "sample-recap",
+  "kind": "recap",
+  "title": "블록 스키마 모노레포 구현 회고",
+  "createdAt": "2026-07-16T10:00:00Z",
+  "source": {
+    "branch": "feat/block-schema-monorepo",
+    "commitRange": "HEAD~1..HEAD"
+  },
+  "blocks": [
+    {
+      "id": "recap-summary",
+      "type": "prose",
+      "markdown": "공유 JSON 블록 계약과 TypeScript 모노레포 기반을 추가했습니다."
+    },
+    {
+      "id": "recap-result",
+      "type": "callout",
+      "variant": "success",
+      "title": "결과",
+      "markdown": "문서와 블록은 zod 런타임 검증을 거쳐 안전하게 파싱됩니다."
+    },
+    {
+      "id": "recap-files",
+      "type": "file-tree",
+      "entries": [
+        {
+          "path": "package.json",
+          "status": "added"
+        },
+        {
+          "path": "packages/schema",
+          "status": "added"
+        }
+      ]
+    },
+    {
+      "id": "recap-details",
+      "type": "tabs",
+      "items": [
+        {
+          "label": "계약",
+          "blocks": [
+            {
+              "id": "recap-contract-detail",
+              "type": "prose",
+              "markdown": "12종 블록과 문서 envelope의 필드를 고정했습니다."
+            }
+          ]
+        },
+        {
+          "label": "경계",
+          "blocks": [
+            {
+              "id": "recap-boundary-detail",
+              "type": "callout",
+              "variant": "info",
+              "markdown": "렌더러의 sanitize와 콘텐츠 lint는 후속 마일스톤의 책임입니다."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "recap-consumers",
+      "type": "columns",
+      "items": [
+        {
+          "blocks": [
+            {
+              "id": "recap-viewer-column",
+              "type": "prose",
+              "markdown": "뷰어는 safeParse를 사용할 수 있습니다."
+            }
+          ]
+        },
+        {
+          "blocks": [
+            {
+              "id": "recap-skill-column",
+              "type": "prose",
+              "markdown": "스킬은 발행 전에 parse를 사용할 수 있습니다."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "recap-schema-diff",
+      "type": "diff",
+      "title": "블록 판별 유니온",
+      "file": "packages/schema/src/block.ts",
+      "lang": "typescript",
+      "diff": "+export const blockSchema: z.ZodType<Block> = z.lazy(() =>\n+  z.discriminatedUnion('type', [\n+    proseSchema,"
+    }
+  ]
+}

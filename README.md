@@ -3,7 +3,7 @@
 > 코딩 에이전트의 작업 계획(plan)과 작업 회고(recap)를 사람이 검토하기 좋은
 > 인터랙티브 비주얼 문서로 만들어주는 도구.
 
-**Version**: 0.1.0 (사전 구현 단계)
+**Version**: 0.2.0 (M1 — 블록 스키마 & 모노레포)
 
 ## 무엇을 하나
 
@@ -23,6 +23,21 @@
 | [docs/GOAL.md](docs/GOAL.md) | 전체 목표와 마일스톤 로드맵 (M0~M7) |
 | [docs/ARCHI.md](docs/ARCHI.md) | 아키텍처 기준 문서 |
 | [DESIGN.md](DESIGN.md) | 뷰어 UI 디자인 시스템 (블록 콘텐츠에는 미적용) |
+
+## 개발
+
+pnpm workspace 모노레포 (Node `^22.13.0 || >=24`, pnpm 10).
+
+```bash
+pnpm install
+pnpm lint      # ESLint
+pnpm typecheck # 패키지별 tsc --noEmit
+pnpm test      # 빌드 후 Vitest 실행 (dist smoke 포함)
+pnpm build     # 패키지별 tsc 빌드
+```
+
+핵심 패키지: [`packages/schema`](packages/schema) — 블록 JSON 스키마
+(스킬·뷰어·저장 계층이 공유하는 계약).
 
 ## 개발 워크플로우
 

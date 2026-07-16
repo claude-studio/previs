@@ -17,13 +17,17 @@ previs(previsualization)는 코딩 에이전트의 작업 계획(plan)과 작업
 - **recap** — 구현 완료 후 PR/브랜치/diff를 변경의 "형태"로 요약해 raw diff
   이전의 리뷰 진입점을 제공한다.
 
-> **현재 상태**: 사전 구현 단계. 저장소에는 규칙 문서(AGENTS.md), 디자인 시스템
-> 명세(DESIGN.md), 본 문서만 존재한다.
+> **현재 상태**: M1 블록 스키마와 모노레포 툴체인이 구현됐다. 뷰어·스킬·협업
+> 계층은 후속 마일스톤에서 구현한다.
 
 ## 3. Technology Stack
 
 | 계층 | 기술 | 상태 |
 |------|------|------|
+| 모노레포 | pnpm workspace (pnpm 10.33.0) | 확정 |
+| 공통 툴체인 | TypeScript 6.0.3·ESLint 10.7.0·Prettier 3.9.5 | 확정 |
+| 블록 스키마 | `@previs/schema`·Zod 4.4.3 | 확정 |
+| 테스트 | Vitest 4.1.10 | 확정 |
 | 뷰어 | React SPA (TypeScript) | 예정 |
 | UI 프리미티브 | shadcn/ui + Tabler Icons | 예정 |
 | 스타일 토큰 | DESIGN.md (MiniMax 기반) + Tailwind CSS 변수 매핑 | 명세 확정 |
@@ -32,7 +36,8 @@ previs(previsualization)는 코딩 에이전트의 작업 계획(plan)과 작업
 | 에이전트 연동 | Claude Code 스킬 `/plan`, `/recap` | 예정 |
 | 로컬 런처 | Node 스크립트 (싱글턴 보장) | 설계 확정 |
 
-의존성 버전은 스캐폴딩 시 `pnpm view`로 확인 후 확정한다 (AGENTS.md 작업 규칙).
+의존성 버전은 스캐폴딩 시 확인한 기준으로 고정하며, 변경 시 `pnpm view` 또는
+최신 공식 문서로 재확인한다 (AGENTS.md 작업 규칙).
 
 ## 4. Project Structure
 
@@ -44,6 +49,19 @@ previs/
 ├── CLAUDE.md        # AGENTS.md 심볼릭 링크
 ├── DESIGN.md        # 뷰어 UI 디자인 시스템 명세
 ├── README.md
+├── package.json     # pnpm workspace 루트 툴체인
+├── pnpm-workspace.yaml
+├── tsconfig.base.json
+├── eslint.config.ts
+├── vitest.config.ts
+├── packages/
+│   └── schema/      # @previs/schema — 블록·문서 스키마 단일 진실 원천
+│       ├── src/
+│       │   ├── index.ts
+│       │   ├── document.ts
+│       │   ├── block.ts
+│       │   └── blocks/ # 12종 블록별 Zod 스키마
+│       └── fixtures/ # plan/recap/kitchen-sink 샘플 문서
 └── docs/            # TRIP 워크플로우 문서
     ├── 1-plans/     # 기능 계획 문서
     ├── 2-changelog/ # 버전 체인지로그
@@ -52,8 +70,7 @@ previs/
     └── 6-memo/
 ```
 
-구현 단계 진입 시 모노레포(pnpm workspace) 구성을 예정하며, 확정 시 본 섹션을
-갱신한다.
+`apps/*`도 workspace 범위에 선언되어 있으며 M2 뷰어가 이 위치를 사용한다.
 
 ## 5. Core Architecture Principles
 
@@ -70,9 +87,11 @@ previs/
 
 ## 6. Build System & Toolchain
 
-- 패키지 매니저: pnpm (예정)
+- 패키지 매니저: pnpm 10.33.0, Node.js `^22.13.0 || >=24` (ESLint 10 요구 범위와 정합)
 - TypeScript 전용 — `.js`/`.mjs` 소스 금지 (AGENTS.md)
-- 빌드·lint·test 명령은 스캐폴딩 후 본 섹션과 TRIP 스킬에 반영한다.
+- 루트 검증 명령: `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`
+- `@previs/schema`는 plain `tsc`로 ESM·선언 파일을 `dist/`에 산출한다.
+- 공통 설정은 `tsconfig.base.json`, `eslint.config.ts`, `vitest.config.ts`에 둔다.
 
 ## 7. Configuration
 
@@ -143,10 +162,12 @@ flowchart LR
 - 뷰어: 낙관적 UI + 실패 시 롤백 (AGENTS.md 뷰어 UX 규칙).
 - 스킬: 발행 실패 시 로컬 JSON을 보존해 재시도 가능하게 한다.
 
-## 14. Testing Strategy (예정)
+## 14. Testing Strategy
 
-- 테스트 프레임워크·명령은 스캐폴딩 시 확정 후 본 섹션과
-  [4-unit-tests/TESTING.md](4-unit-tests/TESTING.md)에 반영한다.
+- 테스트 프레임워크: Vitest 4.1.10
+- 루트 `vitest.config.ts`는 `packages/*`를 프로젝트로 탐색하고, 스키마 패키지는
+  Node 환경(`packages/schema/vitest.config.ts`)을 사용한다.
+- 테스트는 소스 파일 옆에 콜로케이션한다.
 - 우선순위: 블록 스키마 검증 > diff→블록 도출 로직 > 렌더러 스냅샷.
 
 ## 15. Security Considerations

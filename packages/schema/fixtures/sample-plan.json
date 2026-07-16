@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "id": "sample-plan",
+  "kind": "plan",
+  "title": "블록 스키마 모노레포 구현 계획",
+  "createdAt": "2026-07-16T09:00:00Z",
+  "blocks": [
+    {
+      "id": "plan-overview",
+      "type": "prose",
+      "markdown": "공유 블록 계약과 스키마 패키지를 먼저 고정합니다."
+    },
+    {
+      "id": "plan-scope",
+      "type": "callout",
+      "variant": "info",
+      "title": "범위",
+      "markdown": "M1에서는 스키마와 모노레포 툴체인만 다룹니다."
+    },
+    {
+      "id": "plan-files",
+      "type": "file-tree",
+      "entries": [
+        {
+          "path": "packages/schema/src/block.ts",
+          "status": "added",
+          "note": "12종 블록 유니온"
+        },
+        {
+          "path": "packages/schema/src/document.ts",
+          "status": "added",
+          "note": "문서 envelope와 전역 검증"
+        }
+      ]
+    },
+    {
+      "id": "plan-options",
+      "type": "tabs",
+      "items": [
+        {
+          "label": "스키마",
+          "blocks": [
+            {
+              "id": "plan-schema-detail",
+              "type": "prose",
+              "markdown": "문서는 schemaVersion과 kind를 최상위에 둡니다."
+            }
+          ]
+        },
+        {
+          "label": "검증",
+          "blocks": [
+            {
+              "id": "plan-validation-detail",
+              "type": "callout",
+              "variant": "warning",
+              "markdown": "중복 id와 과도한 컨테이너 중첩은 거부합니다."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "plan-workstreams",
+      "type": "columns",
+      "items": [
+        {
+          "blocks": [
+            {
+              "id": "plan-schema-column",
+              "type": "prose",
+              "markdown": "스키마 패키지를 구현합니다."
+            }
+          ]
+        },
+        {
+          "blocks": [
+            {
+              "id": "plan-tooling-column",
+              "type": "prose",
+              "markdown": "루트 명령과 빌드 설정을 확정합니다."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "plan-example-diff",
+      "type": "diff",
+      "title": "문서 검증 추가",
+      "file": "packages/schema/src/document.ts",
+      "lang": "typescript",
+      "diff": "+export const MAX_CONTAINER_DEPTH = 4;"
+    }
+  ]
+}

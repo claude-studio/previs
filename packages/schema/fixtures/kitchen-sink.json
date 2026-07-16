@@ -1,0 +1,211 @@
+{
+  "schemaVersion": 1,
+  "id": "kitchen-sink",
+  "kind": "plan",
+  "title": "전체 블록 스키마 픽스처",
+  "createdAt": "2026-07-16T11:00:00+09:00",
+  "blocks": [
+    {
+      "id": "sink-prose",
+      "type": "prose",
+      "markdown": "모든 블록 타입을 한 문서에 담은 검증용 픽스처입니다."
+    },
+    {
+      "id": "sink-callout",
+      "type": "callout",
+      "variant": "danger",
+      "markdown": "이 문서는 렌더러 전체 블록 셋의 입력으로 승계됩니다."
+    },
+    {
+      "id": "sink-file-tree",
+      "type": "file-tree",
+      "entries": [
+        {
+          "path": "packages/schema/src/index.ts",
+          "status": "modified",
+          "inferred": true
+        },
+        {
+          "path": "packages/schema/src/legacy.ts",
+          "status": "renamed",
+          "from": "packages/schema/src/old.ts",
+          "note": "이름 변경 예시"
+        }
+      ]
+    },
+    {
+      "id": "sink-tabs",
+      "type": "tabs",
+      "items": [
+        {
+          "label": "첫 번째",
+          "blocks": [
+            {
+              "id": "sink-tabs-prose",
+              "type": "prose",
+              "markdown": "컨테이너 안의 중첩 블록입니다."
+            }
+          ]
+        },
+        {
+          "label": "두 번째",
+          "blocks": [
+            {
+              "id": "sink-tabs-diff",
+              "type": "diff",
+              "title": "중첩 diff",
+              "file": "packages/schema/src/block.ts",
+              "diff": "+export type Block =\n+  | ProseBlock\n+  | CalloutBlock\n+  | FileTreeBlock"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sink-columns",
+      "type": "columns",
+      "items": [
+        {
+          "blocks": [
+            {
+              "id": "sink-column-one",
+              "type": "prose",
+              "markdown": "첫 번째 열"
+            }
+          ]
+        },
+        {
+          "blocks": [
+            {
+              "id": "sink-column-two",
+              "type": "prose",
+              "markdown": "두 번째 열"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sink-diff",
+      "type": "diff",
+      "title": "블록 공통 규약 추가",
+      "file": "packages/schema/src/block.ts",
+      "lang": "typescript",
+      "diff": "+export const blockBaseSchema = z.object({\n+  id: z.string().min(1),\n+  type: z.string().min(1),\n+});"
+    },
+    {
+      "id": "sink-annotated-code",
+      "type": "annotated-code",
+      "file": "packages/schema/src/index.ts",
+      "lang": "typescript",
+      "code": "export function parsePrevisDocument(input: unknown): PrevisDocument {\n  return previsDocumentSchema.parse(input);\n}",
+      "startLine": 48,
+      "annotations": [
+        {
+          "line": 2,
+          "markdown": "검증 실패 시 예외를 전달합니다."
+        }
+      ]
+    },
+    {
+      "id": "sink-data-model",
+      "type": "data-model",
+      "entities": [
+        {
+          "name": "Document",
+          "fields": [
+            {
+              "name": "id",
+              "type": "string"
+            },
+            {
+              "name": "kind",
+              "type": "plan | recap",
+              "inferred": true
+            }
+          ]
+        },
+        {
+          "name": "Block",
+          "fields": [
+            {
+              "name": "id",
+              "type": "string"
+            }
+          ]
+        }
+      ],
+      "relations": [
+        {
+          "from": "Document",
+          "to": "Block",
+          "kind": "1-n",
+          "label": "contains"
+        }
+      ]
+    },
+    {
+      "id": "sink-api-endpoint",
+      "type": "api-endpoint",
+      "method": "POST",
+      "path": "/documents",
+      "summary": "문서를 발행합니다.",
+      "request": {
+        "body": [
+          {
+            "name": "title",
+            "type": "string",
+            "required": true
+          }
+        ]
+      },
+      "responses": [
+        {
+          "status": 201,
+          "note": "생성된 문서",
+          "body": [
+            {
+              "name": "id",
+              "type": "string",
+              "required": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sink-wireframe",
+      "type": "wireframe",
+      "surface": "browser",
+      "title": "문서 뷰",
+      "html": "<main><h1>문서 제목</h1><section>블록 콘텐츠</section></main>"
+    },
+    {
+      "id": "sink-diagram",
+      "type": "diagram",
+      "engine": "mermaid",
+      "code": "flowchart LR\n  A[Agent] --> B[Document]",
+      "caption": "발행 흐름"
+    },
+    {
+      "id": "sink-question-form",
+      "type": "question-form",
+      "questions": [
+        {
+          "id": "approval",
+          "prompt": "계획을 승인할까요?",
+          "options": [
+            {
+              "label": "승인",
+              "description": "다음 단계로 진행합니다."
+            },
+            {
+              "label": "수정 요청"
+            }
+          ],
+          "allowFreeText": true
+        }
+      ]
+    }
+  ]
+}

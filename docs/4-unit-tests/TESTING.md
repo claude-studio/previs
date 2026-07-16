@@ -2,8 +2,8 @@
 
 ## Test Framework
 
-미정 — 뷰어 스캐폴딩 시 확정한다 (Vitest 우선 검토). 확정 후 본 문서와
-ARCHI.md §14를 갱신한다.
+Vitest 4.1.10을 사용한다. 루트 설정은 `vitest.config.ts`에서 workspace
+프로젝트를 관리하고, `packages/schema`는 Node 환경으로 실행한다.
 
 ## Running Tests
 
@@ -18,7 +18,7 @@ pnpm test <파일 경로 또는 -t "테스트명">
 pnpm test --coverage
 ```
 
-(스캐폴딩 후 실제 스크립트 확정 시 갱신)
+루트 `package.json`의 `pnpm test`가 전체 workspace 테스트를 실행한다.
 
 ## Test Organization
 
@@ -34,4 +34,5 @@ pnpm test --coverage
 
 ## Coverage Requirements
 
-Not defined — 구현 단계에서 결정
+정량 기준은 아직 정하지 않는다. 블록별 구조 검증과 문서 레벨 경계 조건을
+우선 유지한다.
