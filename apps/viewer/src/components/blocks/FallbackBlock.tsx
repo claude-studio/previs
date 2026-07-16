@@ -1,5 +1,4 @@
 const fallbackLabels: Record<string, string> = {
-  wireframe: '와이어프레임',
   diagram: '다이어그램',
   'annotated-code': '주석 코드',
   'data-model': '데이터 모델',

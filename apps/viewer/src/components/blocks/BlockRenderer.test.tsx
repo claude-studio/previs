@@ -91,15 +91,27 @@ describe('BlockRenderer', () => {
     });
   });
 
-  it('renders M3 blocks with the fallback placeholder', () => {
+  it('renders a wireframe block after lazy loading', async () => {
     const block: Block = {
       id: 'wf1',
       type: 'wireframe',
       surface: 'browser',
-      html: '<main>목록</main>',
+      title: '문서 목록',
+      html: '<main><h1>목록</h1></main>',
     };
     render(<BlockRenderer block={block} />);
-    expect(screen.getByText('와이어프레임')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: '목록' })).toBeInTheDocument();
+  });
+
+  it('renders remaining M3 blocks with the fallback placeholder', () => {
+    const block: Block = {
+      id: 'dg1',
+      type: 'diagram',
+      engine: 'mermaid',
+      code: 'flowchart LR\n  A --> B',
+    };
+    render(<BlockRenderer block={block} />);
+    expect(screen.getByText('다이어그램')).toBeInTheDocument();
     expect(screen.getByText('이 블록은 M3에서 지원됩니다.')).toBeInTheDocument();
   });
 });

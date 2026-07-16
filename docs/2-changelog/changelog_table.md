@@ -2,13 +2,20 @@
 
 > Week 1 = 2026-07-13(월)이 속한 주. 주차는 이 기준일로부터의 경과 주 수 + 1이다.
 
-| Version | Week | Commit Message                                    |
-| ------- | ---- | ------------------------------------------------- |
+| Version | Week | Commit Message                                          |
+| ------- | ---- | ------------------------------------------------------- |
+| `0.3.1` | 1    | feat(viewer): 와이어프레임 렌더러 — 손그림 계층 1/2 (M3) |
 | `0.3.0` | 1    | feat(viewer): 뷰어 MVP — 읽기 전용 렌더링 (M2)    |
 | `0.2.0` | 1    | feat(schema): 블록 스키마·모노레포 스캐폴딩 (M1)  |
 | `0.1.0` | 1    | chore: TRIP 워크플로우 초기화                     |
 
 # Changelog Summary
+
+- **v0.3.1 (M3 1/2: Wireframe Renderer - Week 1, 16-07-2026)**:
+  - **--wf-\* 손그림 계층**: 콘텐츠 전용 토큰(라이트/다크 자동 반전) + `.wf-root` 시맨틱 요소 스타일 + surface 프리셋 5종 크롬
+  - **Sanitize**: DOMPurify 태그·속성 이중 allowlist, view-only 강제(disabled·링크/제출 무력화·외부 리소스 차단)
+  - **rough.js 오버레이**: block.id 시드 결정적 스케치, CSS 변수 스트로크로 무재그리기 테마 반전
+  - **안정성**: lazy 청크 실패 에러 바운더리(새로고침 복구), 테스트 30건 추가 (총 106건)
 
 - **v0.3.0 (M2: Viewer MVP - Week 1, 16-07-2026)**:
   - **Viewer**: `apps/viewer` React SPA — DESIGN.md 토큰 매핑(라이트/다크), 문서 목록(그라디언트 카드)·문서 뷰

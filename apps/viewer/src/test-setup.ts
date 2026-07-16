@@ -14,3 +14,19 @@ if (typeof window !== 'undefined' && !window.matchMedia) {
       dispatchEvent: () => false,
     }) as unknown as MediaQueryList;
 }
+
+if (typeof globalThis.ResizeObserver === 'undefined') {
+  class DeterministicResizeObserver implements ResizeObserver {
+    constructor(callback: ResizeObserverCallback) {
+      void callback;
+    }
+
+    disconnect() {}
+
+    observe() {}
+
+    unobserve() {}
+  }
+
+  globalThis.ResizeObserver = DeterministicResizeObserver;
+}

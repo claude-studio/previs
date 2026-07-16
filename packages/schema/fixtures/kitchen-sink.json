@@ -178,7 +178,35 @@
       "type": "wireframe",
       "surface": "browser",
       "title": "문서 뷰",
-      "html": "<main><h1>문서 제목</h1><section>블록 콘텐츠</section></main>"
+      "html": "<main><header><h1>문서 제목</h1><nav><ul><li>계획</li><li>회고</li><li>검토</li></ul></nav></header><section><h2>블록 콘텐츠</h2><p>구현 전에 화면의 구조와 흐름을 확인합니다.</p><figure><img alt=\"문서 미리보기\"><figcaption>외부 리소스 없이 표시되는 이미지 자리</figcaption></figure></section></main>"
+    },
+    {
+      "id": "sink-wireframe-desktop",
+      "type": "wireframe",
+      "surface": "desktop",
+      "title": "검토 작업공간",
+      "html": "<main><header><h2>검토 작업공간</h2><small>변경 12개</small></header><section><h3>변경 요약</h3><table><thead><tr><th>영역</th><th>상태</th></tr></thead><tbody><tr><td>뷰어</td><td>검토 대기</td></tr><tr><td>스키마</td><td>완료</td></tr></tbody></table></section></main>"
+    },
+    {
+      "id": "sink-wireframe-mobile",
+      "type": "wireframe",
+      "surface": "mobile",
+      "title": "모바일 승인",
+      "html": "<main><header><h2>승인 요청</h2><p>계획을 검토해 주세요.</p></header><form><label for=\"decision\">의견</label><textarea id=\"decision\" placeholder=\"짧은 의견을 남겨 주세요\"></textarea><button type=\"submit\">승인하기</button></form></main>"
+    },
+    {
+      "id": "sink-wireframe-popover",
+      "type": "wireframe",
+      "surface": "popover",
+      "title": "필터",
+      "html": "<aside><h3>필터</h3><label for=\"status\">상태</label><select id=\"status\"><option selected>전체</option><option>검토 대기</option></select><hr><p><strong>3개</strong>의 블록이 표시됩니다.</p></aside>"
+    },
+    {
+      "id": "sink-wireframe-panel",
+      "type": "wireframe",
+      "surface": "panel",
+      "title": "문서 정보",
+      "html": "<aside><header><h3>문서 정보</h3><small>plan</small></header><dl><dt>작성자</dt><dd>코딩 에이전트</dd><dt>상태</dt><dd>승인 대기</dd></dl><details><summary>검토 규칙</summary><p>구조화 블록은 실제 변경에서 도출합니다.</p></details></aside>"
     },
     {
       "id": "sink-diagram",

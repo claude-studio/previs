@@ -22,19 +22,19 @@ previs(previsualization)는 코딩 에이전트의 작업 계획(plan)과 작업
 
 ## 3. Technology Stack
 
-| 계층 | 기술 | 상태 |
-|------|------|------|
-| 모노레포 | pnpm workspace (pnpm 10.33.0) | 확정 |
-| 공통 툴체인 | TypeScript 6.0.3·ESLint 10.7.0·Prettier 3.9.5 | 확정 |
-| 블록 스키마 | `@previs/schema`·Zod 4.4.3 | 확정 |
-| 테스트 | Vitest 4.1.10 | 확정 |
-| 뷰어 | React SPA (TypeScript, Vite) | 확정 (M2) |
-| UI 프리미티브 | shadcn/ui + Tabler Icons | 확정 (M2) |
-| 스타일 토큰 | DESIGN.md (MiniMax 기반) + Tailwind CSS 변수 매핑 | 명세 확정 |
-| 콘텐츠 렌더링 | react-markdown(산문) + shiki(diff) | 확정 (M2, rough.js·mermaid는 M3 예정) |
-| 백엔드 | Supabase (Auth·RLS·Realtime·Storage) | 예정 |
-| 에이전트 연동 | Claude Code 스킬 `/plan`, `/recap` | 예정 |
-| 로컬 런처 | Node 스크립트 (싱글턴 보장) | 설계 확정 |
+| 계층          | 기술                                                     | 상태                                            |
+| ------------- | -------------------------------------------------------- | ----------------------------------------------- |
+| 모노레포      | pnpm workspace (pnpm 10.33.0)                            | 확정                                            |
+| 공통 툴체인   | TypeScript 6.0.3·ESLint 10.7.0·Prettier 3.9.5            | 확정                                            |
+| 블록 스키마   | `@previs/schema`·Zod 4.4.3                               | 확정                                            |
+| 테스트        | Vitest 4.1.10                                            | 확정                                            |
+| 뷰어          | React SPA (TypeScript, Vite)                             | 확정 (M2)                                       |
+| UI 프리미티브 | shadcn/ui + Tabler Icons                                 | 확정 (M2)                                       |
+| 스타일 토큰   | DESIGN.md (MiniMax 기반) + Tailwind CSS 변수 매핑        | 명세 확정                                       |
+| 콘텐츠 렌더링 | react-markdown(산문) + shiki(diff) + rough.js·DOMPurify(wireframe) | 확정 (M3 wireframe, mermaid는 다음 사이클 예정) |
+| 백엔드        | Supabase (Auth·RLS·Realtime·Storage)                     | 예정                                            |
+| 에이전트 연동 | Claude Code 스킬 `/plan`, `/recap`                       | 예정                                            |
+| 로컬 런처     | Node 스크립트 (싱글턴 보장)                              | 설계 확정                                       |
 
 의존성 버전은 스캐폴딩 시 확인한 기준으로 고정하며, 변경 시 `pnpm view` 또는
 최신 공식 문서로 재확인한다 (AGENTS.md 작업 규칙).
@@ -84,7 +84,8 @@ apps/viewer/
     ├── lib/                 # 문서 검증·픽스처 저장소·카드 정체성
     └── components/
         ├── app/             # 문서 목록·카드·뷰·파일 열기·테마
-        ├── blocks/          # 6종 렌더러와 M3 fallback
+        ├── blocks/          # 6종 렌더러와 M3 wireframe 렌더러·fallback
+        │   └── wireframe/   # --wf-* 토큰·sanitize·rough.js 오버레이
         └── ui/              # button·tabs shadcn 프리미티브
 ```
 
@@ -121,11 +122,13 @@ apps/viewer/
 - **앱 크롬**: `apps/viewer/src/components/app`에 문서 목록·그라디언트 카드·
   문서 뷰·파일 열기·테마 전환을 구현했다. 표준 버튼·탭은 shadcn/ui
   프리미티브를 사용하고 DESIGN.md 토큰을 적용한다.
-- **블록 렌더러**: `BlockRenderer`가 타입별 React 컴포넌트를 매핑한다. M2는
-  `prose`, `callout`, `file-tree`, `tabs`, `columns`, `diff`를 지원하며,
-  `wireframe`, `diagram`, `annotated-code`, `data-model`, `api-endpoint`,
-  `question-form`은 M3 안내 fallback으로 렌더링한다. `tabs`와 `columns`는
-  동일한 렌더러를 재귀 호출한다.
+- **블록 렌더러**: `BlockRenderer`가 타입별 React 컴포넌트를 매핑한다. 현재는
+  `prose`, `callout`, `file-tree`, `tabs`, `columns`, `diff`, `wireframe`을
+  지원하며, `wireframe`은 lazy 로딩되는 콘텐츠 계층 렌더러로
+  DOMPurify sanitize와 rough.js 오버레이를 사용한다. `diagram`,
+  `annotated-code`, `data-model`, `api-endpoint`, `question-form`은 다음
+  사이클까지 안내 fallback으로 렌더링한다. `tabs`와 `columns`는 동일한
+  렌더러를 재귀 호출한다.
 - **문서 카드 정체성**: plan/recap 문서 카드는 문서 id의 결정적 해시로
   DESIGN.md의 coral/magenta/blue/purple 그라디언트 중 하나를 배정받는다.
 - **문서 경계**: 내장 픽스처와 열린 파일 모두 `safeParsePrevisDocument`를
@@ -195,7 +198,8 @@ flowchart LR
 
 - diff 내 시크릿은 절대 전사하지 않고 마스킹한다 (AGENTS.md 콘텐츠 규칙).
 - 콘텐츠는 JSON 블록이므로 뷰어에서 임의 코드 실행 경로가 없다.
-  와이어프레임 HTML 조각은 sanitize 후 렌더링한다.
+  와이어프레임 HTML 조각은 DOMPurify 태그·속성 이중 allowlist로 sanitize하고
+  view-only(컨트롤 disabled, 링크·제출 무력화, 외부 리소스 차단)로 렌더링한다.
 - 협업 모드에서 비공개 문서는 RLS로 접근을 통제하고 기본값은 비공개다.
   기본(로컬) 모드는 데이터가 머신 밖으로 나가지 않는다.
 
