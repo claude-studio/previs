@@ -11,6 +11,12 @@ const kindLabels = {
   recap: 'RECAP',
 } as const;
 
+const originLabels = {
+  builtin: '내장 픽스처',
+  opened: '열린 파일',
+  published: '발행 문서',
+} as const;
+
 function formatDate(value: string) {
   return new Intl.DateTimeFormat('ko-KR', {
     dateStyle: 'medium',
@@ -50,7 +56,7 @@ export function DocumentView({ documents }: { documents: DocumentEntry[] }) {
               </span>
               <span className="inline-flex items-center gap-1.5 text-xs text-muted">
                 <IconFileText aria-hidden="true" size={15} />
-                {entry.origin === 'builtin' ? '내장 픽스처' : '열린 파일'}
+                {originLabels[entry.origin]}
               </span>
             </div>
             <h1 className="text-heading-lg font-semibold tracking-tight text-ink">

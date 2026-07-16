@@ -5,6 +5,8 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
+import { previsDocsPlugin } from './server/previs-docs-plugin';
+
 const PORT_START = 47738;
 const PORT_COUNT = 64;
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -24,7 +26,7 @@ function viewerPort(): number {
 }
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), previsDocsPlugin(projectRoot)],
   resolve: {
     alias: [
       {

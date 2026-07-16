@@ -9,10 +9,12 @@ import { DocumentCard } from './DocumentCard';
 export function DocumentList({
   documents,
   fileError,
+  publishedError,
   onFiles,
 }: {
   documents: DocumentEntry[];
   fileError: string | null;
+  publishedError: string | null;
   onFiles: (files: File[]) => void | Promise<unknown>;
 }) {
   const [isDragging, setIsDragging] = useState(false);
@@ -44,9 +46,7 @@ export function DocumentList({
             <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-muted">
               previs / workspace
             </p>
-            <h1 className="text-heading-lg font-semibold tracking-tight text-ink">
-              문서 목록
-            </h1>
+            <h1 className="text-heading-lg font-semibold tracking-tight text-ink">문서 목록</h1>
             <p className="mt-3 max-w-xl text-base text-steel">
               에이전트가 만든 계획과 회고를 한 곳에서 검토하세요.
             </p>
@@ -77,8 +77,16 @@ export function DocumentList({
               className="mb-5 rounded-lg border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger"
               role="alert"
             >
-              <span className="font-semibold">문서를 열지 못했습니다.</span>{' '}
-              {fileError}
+              <span className="font-semibold">문서를 열지 못했습니다.</span> {fileError}
+            </div>
+          ) : null}
+          {publishedError ? (
+            <div
+              className="mb-5 rounded-lg border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger"
+              role="alert"
+            >
+              <span className="font-semibold">발행 문서를 새로고침하지 못했습니다.</span>{' '}
+              {publishedError}
             </div>
           ) : null}
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">

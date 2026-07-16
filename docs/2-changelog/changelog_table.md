@@ -4,6 +4,7 @@
 
 | Version | Week | Commit Message                                          |
 | ------- | ---- | ------------------------------------------------------- |
+| `0.4.1` | 1    | feat(skills): 로컬 발행 파이프라인·/previs-plan — 에이전트 스킬 1/2 (M4) |
 | `0.4.0` | 1    | feat(viewer): 잔여 블록 렌더러 — 손그림 계층 2/2 (M3 완료) |
 | `0.3.1` | 1    | feat(viewer): 와이어프레임 렌더러 — 손그림 계층 1/2 (M3) |
 | `0.3.0` | 1    | feat(viewer): 뷰어 MVP — 읽기 전용 렌더링 (M2)    |
@@ -11,6 +12,13 @@
 | `0.1.0` | 1    | chore: TRIP 워크플로우 초기화                     |
 
 # Changelog Summary
+
+- **v0.4.1 (M4 1/2: Local Publish Pipeline & /previs-plan - Week 1, 16-07-2026)**:
+  - **발행 서빙 API**: `/api/documents` Vite 플러그인 — `.previs/*.json` raw 서빙 (`PREVIS_DOCS_DIR` 오버라이드, 깨진 JSON errors 보고), 검증은 클라이언트 경계 유지
+  - **published origin**: 판별 유니언 fetch(전송 실패 ≠ 빈 디렉토리), mount·focus 갱신, 실패 시 마지막 성공 목록 유지 + `publishedError`, 우선순위 `opened > published > builtin`
+  - **검증 CLI**: `pnpm doc:validate <file>` — safeParse 이슈 출력·exit 코드 게이트
+  - **/previs-plan 스킬**: `skills/` 제품 디렉토리 + `.claude/skills/` 심링크, plan 골격·발행 규약(`plan-YYYYMMDD-<slug>`, 충돌 접미사)·승인 게이트, 명시 호출 전용
+  - **스킬 명칭 확정**: `/previs-plan`·`/previs-recap`으로 문서 일괄 갱신, 테스트 15건 추가 (총 177건)
 
 - **v0.4.0 (M3 2/2: Remaining Block Renderers - Week 1, 16-07-2026)**:
   - **diagram**: mermaid 11 handDrawn + `--wf-*` 실값 매핑, 결정적 seed, 테마 관찰 재렌더, lazy 격리

@@ -26,7 +26,7 @@
 | 콘텐츠 포맷 | **JSON 블록 배열** (MDX 아님) | DB 저장 콘텐츠의 런타임 코드 실행 위험 제거 |
 | 문서 저장 (기본) | 로컬 `.previs/` JSON 폴더 | 발행 왕복 없는 로컬 우선 파이프라인 |
 | 협업 모드 (선택) | Supabase (Auth + RLS + Realtime + Storage) | 코멘트·공유·피드백 루프를 백엔드 코드 없이 구현 |
-| 에이전트 연동 | Claude Code 스킬 `/plan`, `/recap` | 에이전트가 JSON 블록 문서를 작성·발행 |
+| 에이전트 연동 | Claude Code 스킬 `/previs-plan`, `/previs-recap` | 에이전트가 JSON 블록 문서를 작성·발행 |
 | 시각화 재료 | rough.js(손그림), mermaid(다이어그램), shiki(코드) | 손그림 미학과 다이어그램·코드 렌더링 |
 | UI 프리미티브 | shadcn/ui + Tabler Icons | 표준 컨트롤과 아이콘 체계의 일관성 |
 

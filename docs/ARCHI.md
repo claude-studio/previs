@@ -17,8 +17,9 @@ previs(previsualization)는 코딩 에이전트의 작업 계획(plan)과 작업
 - **recap** — 구현 완료 후 PR/브랜치/diff를 변경의 "형태"로 요약해 raw diff
   이전의 리뷰 진입점을 제공한다.
 
-> **현재 상태**: M1 블록 스키마·M2 읽기 전용 뷰어·M3 시각화 심화가 구현됐다.
-> 스킬·협업 계층은 후속 마일스톤에서 구현한다.
+> **현재 상태**: M1 블록 스키마·M2 읽기 전용 뷰어·M3 시각화 심화·M4 1차
+> 사이클(로컬 발행 파이프라인·`/previs-plan` 스킬)이 구현됐다.
+> `/previs-recap`·런처·협업 계층은 후속 마일스톤에서 구현한다.
 
 ## 3. Technology Stack
 
@@ -33,7 +34,7 @@ previs(previsualization)는 코딩 에이전트의 작업 계획(plan)과 작업
 | 스타일 토큰   | DESIGN.md (MiniMax 기반) + Tailwind CSS 변수 매핑        | 명세 확정                                       |
 | 콘텐츠 렌더링 | react-markdown(산문) + shiki(diff·annotated-code) + mermaid(diagram) + rough.js·DOMPurify(wireframe·diagram) | 확정 (M3) |
 | 백엔드        | Supabase (Auth·RLS·Realtime·Storage)                     | 예정                                            |
-| 에이전트 연동 | Claude Code 스킬 `/plan`, `/recap`                       | 예정                                            |
+| 에이전트 연동 | Claude Code 스킬 `/previs-plan`, `/previs-recap`         | `/previs-plan` 확정 (M4 1/2), recap 예정        |
 | 로컬 런처     | Node 스크립트 (싱글턴 보장)                              | 설계 확정                                       |
 
 의존성 버전은 스캐폴딩 시 확인한 기준으로 고정하며, 변경 시 `pnpm view` 또는
@@ -54,13 +55,17 @@ previs/
 ├── tsconfig.base.json
 ├── eslint.config.ts
 ├── vitest.config.ts
+├── skills/          # 제품 스킬 소스 (previs-plan) — M7 패키징 단위
+├── .claude/skills/  # skills/ 심링크 — 이 리포에서 도그푸딩
+├── .previs/         # 로컬 발행 문서 (JSON, git 추적)
 ├── packages/
 │   └── schema/      # @previs/schema — 블록·문서 스키마 단일 진실 원천
 │       ├── src/
 │       │   ├── index.ts
 │       │   ├── document.ts
 │       │   ├── block.ts
-│       │   └── blocks/ # 12종 블록별 Zod 스키마
+│       │   ├── blocks/ # 12종 블록별 Zod 스키마
+│       │   └── cli/    # doc:validate CLI (validate.ts)
 │       └── fixtures/ # plan/recap/kitchen-sink 샘플 문서
 └── docs/            # TRIP 워크플로우 문서
     ├── 1-plans/     # 기능 계획 문서
@@ -72,16 +77,18 @@ previs/
 
 `apps/*`도 workspace 범위에 선언되어 있으며 M2 뷰어가 이 위치를 사용한다.
 
-M2 구현 구조:
+뷰어 구조 (M2~M4):
 
 ```
 apps/viewer/
 ├── package.json             # @previs/viewer, Vite·Tailwind 툴체인
-├── vite.config.ts           # React·Tailwind 플러그인, previs 전용 포트
+├── vite.config.ts           # React·Tailwind·발행 문서 API 플러그인, previs 전용 포트
 ├── vitest.config.ts         # jsdom 테스트 환경
+├── server/                  # previs-docs-plugin — /api/documents (.previs 서빙)
+├── shared/                  # 서버·클라이언트 공유 API 페이로드 타입
 └── src/
-    ├── App.tsx              # 목록·문서 뷰 라우팅과 메모리 문서 상태
-    ├── lib/                 # 문서 검증·픽스처 저장소·카드 정체성·shiki 공용화
+    ├── App.tsx              # 목록·문서 뷰 라우팅과 origin별 문서 상태 병합
+    ├── lib/                 # 문서 검증·발행 fetch·카드 정체성·shiki 공용화
     └── components/
         ├── app/             # 문서 목록·카드·뷰·파일 열기·테마
         ├── blocks/          # 전체 블록 렌더러·lazy wireframe/diagram 경계
@@ -107,6 +114,8 @@ apps/viewer/
 - 패키지 매니저: pnpm 10.33.0, Node.js `^22.13.0 || >=24` (ESLint 10 요구 범위와 정합)
 - TypeScript 전용 — `.js`/`.mjs` 소스 금지 (AGENTS.md)
 - 루트 검증 명령: `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`
+- 문서 검증: `pnpm doc:validate <file>` — `@previs/schema` CLI로 발행 문서를
+  safeParse 게이트에 통과시킨다 (스킬 발행 루프가 사용).
 - `@previs/schema`는 plain `tsc`로 ESM·선언 파일을 `dist/`에 산출한다.
 - 공통 설정은 `tsconfig.base.json`, `eslint.config.ts`, `vitest.config.ts`에 둔다.
 
@@ -131,15 +140,26 @@ apps/viewer/
   유지하며, `tabs`와 `columns`는 동일한 렌더러를 재귀 호출한다.
 - **문서 카드 정체성**: plan/recap 문서 카드는 문서 id의 결정적 해시로
   DESIGN.md의 coral/magenta/blue/purple 그라디언트 중 하나를 배정받는다.
-- **문서 경계**: 내장 픽스처와 열린 파일 모두 `safeParsePrevisDocument`를
-  통과한 문서만 메모리 저장소에 들어간다. M2는 런타임 문서 영속화를 하지 않는다.
+- **문서 경계**: 내장 픽스처·열린 파일·발행 문서(`/api/documents`) 모두
+  `safeParsePrevisDocument`를 통과한 문서만 메모리 저장소에 들어간다. 발행
+  문서는 mount·window focus 시 갱신하며(폴링 없음, in-flight 가드), 전송
+  실패와 빈 디렉토리를 판별 유니언으로 구분해 실패 시 마지막 성공 목록을
+  유지하고 `publishedError` 경고를 노출한다(성공 refetch에서 해제). id 충돌
+  우선순위는 `opened > published > builtin`. 뷰어는 런타임 문서 영속화를
+  하지 않는다.
 
-## 9. Data Model & Storage (예정)
+## 9. Data Model & Storage
 
-문서 저장은 이중 모드다. **기본은 로컬**이며 Supabase는 협업 계층(M6)이다.
+문서 저장은 이중 모드다. **기본은 로컬**(M4에서 구현)이며 Supabase는 협업
+계층(M6, 예정)이다.
 
-- **기본(로컬) 모드**: 문서는 대상 프로젝트의 `.previs/` 폴더에 JSON 파일로
-  발행된다. DB 없이 동작하며 git으로 버전 관리할 수 있다.
+- **기본(로컬) 모드 (구현)**: 문서는 대상 프로젝트의 `.previs/` 폴더에 JSON
+  파일로 발행된다. 파일명 = 문서 id(`plan-YYYYMMDD-<slug>.json`, 충돌 시
+  `-2`·`-3` 접미사로 유일화, 덮어쓰기 금지). dev 서버의 `/api/documents`가
+  `.previs/*.json`을 raw pass-through로 서빙하고(`PREVIS_DOCS_DIR`
+  오버라이드 지원, 디렉토리 부재 시 빈 목록, 깨진 JSON은 errors 보고),
+  스키마 검증은 클라이언트 경계에서만 수행한다. DB 없이 동작하며 git으로
+  버전 관리할 수 있다.
 - **협업(Supabase) 모드 핵심 테이블**: documents(kind: plan|recap, 블록 JSON,
   메타), comments(블록 앵커, 상태), profiles.
 - **접근 제어**: Supabase RLS로 소유자/공유 링크/게스트 권한을 구분한다.
@@ -147,12 +167,22 @@ apps/viewer/
 - **파일**: 스크린샷 등 대용량 자산은 Storage에 저장하고 URL만 테이블에 남긴다.
 - **마이그레이션**: additive만 허용 (AGENTS.md 데이터 규칙).
 
-## 10. Agent Integration (예정)
+## 10. Agent Integration (1/2 구현)
 
-- Claude Code 스킬 `/plan`, `/recap`이 JSON 블록 문서를 작성해 기본적으로
-  로컬 `.previs/` 폴더에 발행한다. 협업 모드에서는 Supabase에 발행한다.
-- recap은 git diff에서 기계적으로 블록을 도출한다 (Grounding Rule).
-- 리뷰어 코멘트는 에이전트가 조회해 코드/문서 수정에 반영한다 (피드백 루프).
+- Claude Code 스킬 `/previs-plan`, `/previs-recap`이 JSON 블록 문서를
+  작성해 기본적으로 로컬 `.previs/` 폴더에 발행한다. 협업 모드(M6 예정)
+  에서는 Supabase에 발행한다.
+- **`/previs-plan` (구현)**: 스킬 소스는 `skills/previs-plan/SKILL.md`
+  (제품 디렉토리)이며 `.claude/skills/` 심링크로 도그푸딩한다. plan 골격
+  (헤드라인 wireframe/diagram → prose → file-tree → question-form → 승인
+  callout), 발행 후 `pnpm doc:validate` 검증 루프, 승인 게이트를 정의한다.
+  파일을 쓰는 워크플로우이므로 `disable-model-invocation: true`로 명시 호출
+  전용. 이번 사이클 발행 대상은 previs 리포 도그푸딩으로 한정하며 외부
+  프로젝트 핸드오프는 M5 런처에서 설계한다.
+- **`/previs-recap` (예정, M4 2/2)**: git diff에서 기계적으로 블록을
+  도출한다 (Grounding Rule).
+- 리뷰어 코멘트는 에이전트가 조회해 코드/문서 수정에 반영한다
+  (피드백 루프, M6 예정).
 
 ## 11. Local Launcher (설계 확정)
 
@@ -171,7 +201,7 @@ apps/viewer/
 
 ```mermaid
 flowchart LR
-    A["코딩 에이전트<br/>/plan · /recap"] -->|JSON 블록 발행| L[".previs/ 로컬 문서"]
+    A["코딩 에이전트<br/>/previs-plan · /previs-recap"] -->|JSON 블록 발행| L[".previs/ 로컬 문서"]
     L --> C["뷰어 React SPA"]
     A -.->|협업 모드 발행| B[("Supabase<br/>Postgres + RLS")]
     B -.->|Realtime 구독| C
@@ -180,10 +210,13 @@ flowchart LR
     B -.->|코멘트 조회| A
 ```
 
-## 13. Error Handling Strategy (예정)
+## 13. Error Handling Strategy
 
-- 뷰어: 낙관적 UI + 실패 시 롤백 (AGENTS.md 뷰어 UX 규칙).
-- 스킬: 발행 실패 시 로컬 JSON을 보존해 재시도 가능하게 한다.
+- 뷰어: 낙관적 UI + 실패 시 롤백 (AGENTS.md 뷰어 UX 규칙). 발행 문서
+  새로고침 실패는 마지막 성공 목록 유지 + 경고 노출로 구현됐다 (§8 문서
+  경계).
+- 스킬: 검증 실패 원본을 삭제하지 않고 보존해 수정·재검증할 수 있게 한다
+  (`/previs-plan` 구현).
 
 ## 14. Testing Strategy
 

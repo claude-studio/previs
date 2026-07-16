@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import App from './App';
 
@@ -27,11 +27,28 @@ function openFile(container: HTMLElement, contents: string) {
   fireEvent.change(input, { target: { files: [file] } });
 }
 
+const fetchMock = vi.fn();
+
+function publishedResponse(documents: { fileName: string; mtimeMs: number; raw: unknown }[]) {
+  return {
+    ok: true,
+    status: 200,
+    json: () => Promise.resolve({ documents, errors: [] }),
+  } as Response;
+}
+
 describe('App', () => {
   beforeEach(() => {
     window.history.pushState(null, '', '/');
     window.localStorage.clear();
     document.documentElement.classList.remove('dark');
+    fetchMock.mockReset();
+    fetchMock.mockResolvedValue(publishedResponse([]));
+    vi.stubGlobal('fetch', fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it('lists the builtin fixtures as document cards', () => {
@@ -107,6 +124,85 @@ describe('App', () => {
       expect(screen.getByText('열린 문서 본문')).toBeInTheDocument();
     });
     expect(screen.getByText('슬래시 문서')).toBeInTheDocument();
+  });
+
+  it('loads published documents and labels them in the document view', async () => {
+    fetchMock.mockResolvedValue(
+      publishedResponse([
+        {
+          fileName: 'plan.json',
+          mtimeMs: 1,
+          raw: { ...openedDocument('발행된 계획'), id: 'published-doc' },
+        },
+      ]),
+    );
+    render(<App />);
+    await waitFor(() => {
+      expect(screen.getByText('발행된 계획')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('발행된 계획'));
+    await waitFor(() => {
+      expect(screen.getByText('발행 문서')).toBeInTheDocument();
+    });
+  });
+
+  it('prefers an opened document over a published one with the same id', async () => {
+    fetchMock.mockResolvedValue(
+      publishedResponse([
+        {
+          fileName: 'shared.json',
+          mtimeMs: 1,
+          raw: { ...openedDocument('발행 버전'), id: 'shared-doc' },
+        },
+      ]),
+    );
+    const { container } = render(<App />);
+    await waitFor(() => {
+      expect(screen.getByText('발행 버전')).toBeInTheDocument();
+    });
+
+    openFile(container, JSON.stringify({ ...openedDocument('열린 버전'), id: 'shared-doc' }));
+    await waitFor(() => {
+      expect(screen.getByText('열린 문서 본문')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('문서 목록'));
+    await waitFor(() => {
+      expect(screen.getByText('열린 버전')).toBeInTheDocument();
+    });
+    expect(screen.queryByText('발행 버전')).not.toBeInTheDocument();
+  });
+
+  it('keeps published entries on refresh failure and clears the warning on recovery', async () => {
+    const documents = [
+      {
+        fileName: 'plan.json',
+        mtimeMs: 1,
+        raw: { ...openedDocument('발행된 계획'), id: 'published-doc' },
+      },
+    ];
+    fetchMock.mockResolvedValueOnce(publishedResponse(documents));
+    render(<App />);
+    await waitFor(() => {
+      expect(screen.getByText('발행된 계획')).toBeInTheDocument();
+    });
+
+    fetchMock.mockRejectedValueOnce(new Error('server down'));
+    fireEvent(window, new Event('focus'));
+    await waitFor(() => {
+      expect(screen.getByText('발행 문서를 새로고침하지 못했습니다.')).toBeInTheDocument();
+    });
+    expect(screen.getByText('발행된 계획')).toBeInTheDocument();
+
+    fetchMock.mockResolvedValueOnce(publishedResponse(documents));
+    fireEvent(window, new Event('focus'));
+    await waitFor(() => {
+      expect(
+        screen.queryByText('발행 문서를 새로고침하지 못했습니다.'),
+      ).not.toBeInTheDocument();
+    });
+    expect(screen.getByText('발행된 계획')).toBeInTheDocument();
   });
 
   it('replaces the stored document when the same id is opened again', async () => {
