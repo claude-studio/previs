@@ -17,8 +17,8 @@ previs(previsualization)는 코딩 에이전트의 작업 계획(plan)과 작업
 - **recap** — 구현 완료 후 PR/브랜치/diff를 변경의 "형태"로 요약해 raw diff
   이전의 리뷰 진입점을 제공한다.
 
-> **현재 상태**: M1 블록 스키마와 모노레포 툴체인이 구현됐다. 뷰어·스킬·협업
-> 계층은 후속 마일스톤에서 구현한다.
+> **현재 상태**: M1 블록 스키마와 모노레포 툴체인, M2 읽기 전용 뷰어가 구현됐다.
+> 스킬·협업 계층은 후속 마일스톤에서 구현한다.
 
 ## 3. Technology Stack
 
@@ -28,10 +28,10 @@ previs(previsualization)는 코딩 에이전트의 작업 계획(plan)과 작업
 | 공통 툴체인 | TypeScript 6.0.3·ESLint 10.7.0·Prettier 3.9.5 | 확정 |
 | 블록 스키마 | `@previs/schema`·Zod 4.4.3 | 확정 |
 | 테스트 | Vitest 4.1.10 | 확정 |
-| 뷰어 | React SPA (TypeScript) | 예정 |
-| UI 프리미티브 | shadcn/ui + Tabler Icons | 예정 |
+| 뷰어 | React SPA (TypeScript, Vite) | 확정 (M2) |
+| UI 프리미티브 | shadcn/ui + Tabler Icons | 확정 (M2) |
 | 스타일 토큰 | DESIGN.md (MiniMax 기반) + Tailwind CSS 변수 매핑 | 명세 확정 |
-| 콘텐츠 렌더링 | rough.js(손그림), mermaid(다이어그램), shiki(코드) | 예정 |
+| 콘텐츠 렌더링 | react-markdown(산문) + shiki(diff) | 확정 (M2, rough.js·mermaid는 M3 예정) |
 | 백엔드 | Supabase (Auth·RLS·Realtime·Storage) | 예정 |
 | 에이전트 연동 | Claude Code 스킬 `/plan`, `/recap` | 예정 |
 | 로컬 런처 | Node 스크립트 (싱글턴 보장) | 설계 확정 |
@@ -72,6 +72,22 @@ previs/
 
 `apps/*`도 workspace 범위에 선언되어 있으며 M2 뷰어가 이 위치를 사용한다.
 
+M2 구현 구조:
+
+```
+apps/viewer/
+├── package.json             # @previs/viewer, Vite·Tailwind 툴체인
+├── vite.config.ts           # React·Tailwind 플러그인, previs 전용 포트
+├── vitest.config.ts         # jsdom 테스트 환경
+└── src/
+    ├── App.tsx              # 목록·문서 뷰 라우팅과 메모리 문서 상태
+    ├── lib/                 # 문서 검증·픽스처 저장소·카드 정체성
+    └── components/
+        ├── app/             # 문서 목록·카드·뷰·파일 열기·테마
+        ├── blocks/          # 6종 렌더러와 M3 fallback
+        └── ui/              # button·tabs shadcn 프리미티브
+```
+
 ## 5. Core Architecture Principles
 
 1. **콘텐츠는 JSON 블록 배열** — MDX를 쓰지 않는다. DB 저장 콘텐츠의 런타임
@@ -100,16 +116,20 @@ previs/
 - 런처 설정(포트·락 파일)은 프로젝트 경로 해시 기반으로 자동 유도한다.
   포트는 전용 대역 `47738~47801`을 사용한다 (§11 참조).
 
-## 8. Components & UI Architecture (예정)
+## 8. Components & UI Architecture
 
-- **앱 크롬**: 문서 목록, 문서 뷰, 코멘트 패널 — shadcn/ui 프리미티브 기반,
-  DESIGN.md 토큰 적용.
-- **블록 렌더러**: 블록 타입별 React 컴포넌트 매핑. 최소 블록 셋:
-  `prose`(산문), `wireframe`, `diagram`, `diff`, `annotated-code`,
-  `data-model`, `api-endpoint`, `file-tree`, `tabs`, `columns`, `callout`,
-  `question-form`.
-- **문서 카드 정체성**: plan/recap 문서 카드는 DESIGN.md의 그라디언트 팔레트로
-  고유 식별색을 갖는다.
+- **앱 크롬**: `apps/viewer/src/components/app`에 문서 목록·그라디언트 카드·
+  문서 뷰·파일 열기·테마 전환을 구현했다. 표준 버튼·탭은 shadcn/ui
+  프리미티브를 사용하고 DESIGN.md 토큰을 적용한다.
+- **블록 렌더러**: `BlockRenderer`가 타입별 React 컴포넌트를 매핑한다. M2는
+  `prose`, `callout`, `file-tree`, `tabs`, `columns`, `diff`를 지원하며,
+  `wireframe`, `diagram`, `annotated-code`, `data-model`, `api-endpoint`,
+  `question-form`은 M3 안내 fallback으로 렌더링한다. `tabs`와 `columns`는
+  동일한 렌더러를 재귀 호출한다.
+- **문서 카드 정체성**: plan/recap 문서 카드는 문서 id의 결정적 해시로
+  DESIGN.md의 coral/magenta/blue/purple 그라디언트 중 하나를 배정받는다.
+- **문서 경계**: 내장 픽스처와 열린 파일 모두 `safeParsePrevisDocument`를
+  통과한 문서만 메모리 저장소에 들어간다. M2는 런타임 문서 영속화를 하지 않는다.
 
 ## 9. Data Model & Storage (예정)
 
@@ -165,8 +185,9 @@ flowchart LR
 ## 14. Testing Strategy
 
 - 테스트 프레임워크: Vitest 4.1.10
-- 루트 `vitest.config.ts`는 `packages/*`를 프로젝트로 탐색하고, 스키마 패키지는
-  Node 환경(`packages/schema/vitest.config.ts`)을 사용한다.
+- 루트 `vitest.config.ts`는 `packages/*`와 `apps/*`를 프로젝트로 탐색한다.
+  스키마 패키지는 Node 환경(`packages/schema/vitest.config.ts`), 뷰어는
+  jsdom 환경(`apps/viewer/vitest.config.ts`)을 사용한다.
 - 테스트는 소스 파일 옆에 콜로케이션한다.
 - 우선순위: 블록 스키마 검증 > diff→블록 도출 로직 > 렌더러 스냅샷.
 

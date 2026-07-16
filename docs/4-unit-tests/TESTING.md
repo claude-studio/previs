@@ -3,7 +3,14 @@
 ## Test Framework
 
 Vitest 4.1.10을 사용한다. 루트 설정은 `vitest.config.ts`에서 workspace
-프로젝트를 관리하고, `packages/schema`는 Node 환경으로 실행한다.
+프로젝트를 관리한다.
+
+패키지별 환경은 다음과 같다.
+
+- `packages/schema`: Node 환경
+- `apps/viewer`: jsdom 환경 + Testing Library (`apps/viewer/vitest.config.ts`)
+
+루트 설정은 `packages/*`와 `apps/*`를 프로젝트로 묶어 실행한다.
 
 ## Running Tests
 
@@ -23,7 +30,8 @@ pnpm test --coverage
 ## Test Organization
 
 - 테스트는 소스 파일 옆에 콜로케이션: `foo.ts` → `foo.test.ts`, 컴포넌트는 `Component.test.tsx`
-- E2E/통합 테스트 구조는 구현 단계에서 결정
+- E2E/통합 테스트 구조는 구현 단계에서 결정한다. M2의 라이트/다크 렌더링은
+  dev 서버에서 수동 확인하고, 자동 브라우저 스위트는 후속 범위다.
 
 ## Writing Tests
 

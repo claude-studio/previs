@@ -3,7 +3,7 @@
 > 코딩 에이전트의 작업 계획(plan)과 작업 회고(recap)를 사람이 검토하기 좋은
 > 인터랙티브 비주얼 문서로 만들어주는 도구.
 
-**Version**: 0.2.0 (M1 — 블록 스키마 & 모노레포)
+**Version**: 0.3.0 (M2 — 뷰어 MVP)
 
 ## 무엇을 하나
 
@@ -36,8 +36,12 @@ pnpm test      # 빌드 후 Vitest 실행 (dist smoke 포함)
 pnpm build     # 패키지별 tsc 빌드
 ```
 
-핵심 패키지: [`packages/schema`](packages/schema) — 블록 JSON 스키마
-(스킬·뷰어·저장 계층이 공유하는 계약).
+핵심 패키지:
+
+- [`packages/schema`](packages/schema) — 블록 JSON 스키마 (스킬·뷰어·저장
+  계층이 공유하는 계약)
+- [`apps/viewer`](apps/viewer) — 로컬 JSON 문서 뷰어. `pnpm --filter
+  @previs/viewer dev`로 실행 (previs 전용 포트 대역 47738~47801)
 
 ## 개발 워크플로우
 

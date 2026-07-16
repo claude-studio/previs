@@ -1,0 +1,39 @@
+{
+  "name": "@previs/viewer",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@fontsource-variable/dm-sans": "5.2.8",
+    "@previs/schema": "workspace:*",
+    "@radix-ui/react-tabs": "1.1.17",
+    "@tabler/icons-react": "3.44.0",
+    "class-variance-authority": "0.7.1",
+    "clsx": "2.1.1",
+    "pretendard": "1.3.9",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "react-markdown": "10.1.0",
+    "react-router": "8.2.0",
+    "shiki": "4.3.1",
+    "tailwind-merge": "3.6.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "4.3.2",
+    "@testing-library/jest-dom": "6.9.1",
+    "@testing-library/react": "16.3.2",
+    "@types/node": "22.20.1",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.0.3",
+    "jsdom": "29.1.1",
+    "tailwindcss": "4.3.2",
+    "vite": "8.1.4"
+  }
+}
