@@ -1,0 +1,20 @@
+:root {
+  --wf-canvas: #f2eee8;
+  --wf-surface: #fffdf8;
+  --wf-ink: #24313b;
+  --wf-line: #8a969c;
+  --wf-muted: #68757c;
+  --wf-accent: #d8664f;
+  --wf-chrome: #e4ded5;
+  --wf-font-body: 'Chalkboard SE', 'Comic Sans MS', 'Pretendard Variable', sans-serif;
+}
+
+.dark {
+  --wf-canvas: #1d2226;
+  --wf-surface: #252b30;
+  --wf-ink: #edf1f2;
+  --wf-line: #8c9aa1;
+  --wf-muted: #b4bec2;
+  --wf-accent: #f18a6f;
+  --wf-chrome: #30383d;
+}

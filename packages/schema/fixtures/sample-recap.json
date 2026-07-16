@@ -22,6 +22,93 @@
       "markdown": "문서와 블록은 zod 런타임 검증을 거쳐 안전하게 파싱됩니다."
     },
     {
+      "id": "recap-schema-model",
+      "type": "data-model",
+      "entities": [
+        {
+          "name": "PrevisDocument",
+          "fields": [
+            {
+              "name": "schemaVersion",
+              "type": "number",
+              "note": "현재 스키마 버전"
+            },
+            {
+              "name": "blocks",
+              "type": "Block[]",
+              "note": "문서 콘텐츠 배열"
+            }
+          ]
+        },
+        {
+          "name": "Block",
+          "inferred": true,
+          "fields": [
+            {
+              "name": "id",
+              "type": "string"
+            },
+            {
+              "name": "type",
+              "type": "string",
+              "inferred": true
+            }
+          ]
+        }
+      ],
+      "relations": [
+        {
+          "from": "PrevisDocument",
+          "to": "Block",
+          "kind": "1-n",
+          "label": "contains"
+        }
+      ]
+    },
+    {
+      "id": "recap-publish-api",
+      "type": "api-endpoint",
+      "method": "POST",
+      "path": "/documents",
+      "summary": "검증된 문서를 발행합니다.",
+      "request": {
+        "body": [
+          {
+            "name": "document",
+            "type": "PrevisDocument",
+            "required": true
+          }
+        ]
+      },
+      "responses": [
+        {
+          "status": 201,
+          "note": "발행된 문서 식별자",
+          "body": [
+            {
+              "name": "id",
+              "type": "string",
+              "required": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "recap-parser-code",
+      "type": "annotated-code",
+      "file": "packages/schema/src/index.ts",
+      "lang": "typescript",
+      "code": "export function parsePrevisDocument(input: unknown): PrevisDocument {\n  return previsDocumentSchema.parse(input);\n}",
+      "startLine": 48,
+      "annotations": [
+        {
+          "line": 1,
+          "markdown": "외부 입력을 문서 스키마로 검증하는 진입점입니다."
+        }
+      ]
+    },
+    {
       "id": "recap-files",
       "type": "file-tree",
       "entries": [

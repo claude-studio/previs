@@ -152,6 +152,20 @@ input {
   background: color-mix(in srgb, var(--danger) 12%, transparent);
 }
 
+.annotated-code-wrapper .line-number {
+  display: inline-block;
+  width: 3rem;
+  margin-inline-end: 0.75rem;
+  color: var(--muted);
+  text-align: end;
+  user-select: none;
+}
+
+.annotated-code-wrapper .line-annotated {
+  background: color-mix(in srgb, var(--info) 10%, transparent);
+  box-shadow: inset 2px 0 var(--info);
+}
+
 @media (max-width: 640px) {
   :root {
     --text-heading-lg: 2rem;

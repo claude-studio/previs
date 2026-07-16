@@ -7,7 +7,15 @@ import { BlockRenderer } from './BlockRenderer';
 vi.mock('shiki', () => ({
   createHighlighter: async () => ({
     codeToHtml: (code: string) => `<pre class="shiki"><code>${code}</code></pre>`,
+    loadLanguage: async () => undefined,
   }),
+}));
+
+vi.mock('mermaid', () => ({
+  default: {
+    initialize: () => undefined,
+    render: async () => ({ svg: '<svg><text>목-다이어그램</text></svg>' }),
+  },
 }));
 
 describe('BlockRenderer', () => {
@@ -103,15 +111,84 @@ describe('BlockRenderer', () => {
     expect(await screen.findByRole('heading', { name: '목록' })).toBeInTheDocument();
   });
 
-  it('renders remaining M3 blocks with the fallback placeholder', () => {
+  it('renders a diagram block after lazy loading with its caption', async () => {
     const block: Block = {
       id: 'dg1',
       type: 'diagram',
       engine: 'mermaid',
       code: 'flowchart LR\n  A --> B',
+      caption: '발행 흐름',
+    };
+    const { container } = render(<BlockRenderer block={block} />);
+    expect(await screen.findByText('발행 흐름')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(container.querySelector('.wf-diagram__svg svg')).toBeInTheDocument();
+    });
+  });
+
+  it('renders an annotated-code block with file header and margin annotations', async () => {
+    const block: Block = {
+      id: 'ac1',
+      type: 'annotated-code',
+      file: 'src/index.ts',
+      lang: 'typescript',
+      code: 'const a = 1;\nconst b = 2;',
+      annotations: [{ line: 2, markdown: '두 번째 줄 주석' }],
+    };
+    const { container } = render(<BlockRenderer block={block} />);
+    expect(screen.getByText('src/index.ts')).toBeInTheDocument();
+    expect(screen.getByText('두 번째 줄 주석')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(container.querySelector('.shiki-wrapper .shiki')).toBeInTheDocument();
+    });
+  });
+
+  it('renders a data-model block with entities and relations', () => {
+    const block: Block = {
+      id: 'dm1',
+      type: 'data-model',
+      entities: [
+        { name: 'Document', fields: [{ name: 'id', type: 'string', inferred: true }] },
+      ],
+      relations: [{ from: 'Document', to: 'Block', kind: '1-n', label: 'contains' }],
     };
     render(<BlockRenderer block={block} />);
-    expect(screen.getByText('다이어그램')).toBeInTheDocument();
-    expect(screen.getByText('이 블록은 M3에서 지원됩니다.')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Document' })).toBeInTheDocument();
+    expect(screen.getByText('추론됨')).toBeInTheDocument();
+    expect(screen.getByText('1-n')).toBeInTheDocument();
+  });
+
+  it('renders an api-endpoint block with method badge and path', () => {
+    const block: Block = {
+      id: 'api1',
+      type: 'api-endpoint',
+      method: 'POST',
+      path: '/documents',
+      responses: [{ status: 201 }],
+    };
+    render(<BlockRenderer block={block} />);
+    expect(screen.getByText('POST')).toBeInTheDocument();
+    expect(screen.getByText('/documents')).toBeInTheDocument();
+    expect(screen.getByText('201')).toBeInTheDocument();
+  });
+
+  it('renders a question-form block as a read-only list', () => {
+    const block: Block = {
+      id: 'q1',
+      type: 'question-form',
+      questions: [
+        {
+          id: 'q-1',
+          prompt: '계획을 승인할까요?',
+          options: [{ label: '승인' }],
+          allowFreeText: true,
+        },
+      ],
+    };
+    render(<BlockRenderer block={block} />);
+    expect(screen.getByText('계획을 승인할까요?')).toBeInTheDocument();
+    expect(screen.getByText('자유 입력 허용')).toBeInTheDocument();
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+    expect(screen.queryByRole('radio')).not.toBeInTheDocument();
   });
 });

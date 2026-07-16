@@ -44,14 +44,15 @@ TRIP 워크플로우 초기화.
 - 문서 목록(그라디언트 카드 정체성) + 문서 뷰
 - 완료 기준: 샘플 plan/recap JSON 문서가 라이트/다크에서 렌더링됨
 
-### M3. 시각화 심화 — 손그림 계층
+### M3. 시각화 심화 — 손그림 계층 — ✅ 완료 (v0.4.0)
 
 previs의 정체성인 `--wf-*` 손그림 체계 구현.
 
 - wireframe 렌더러: 시맨틱 HTML + `--wf-*` 토큰 + surface 프리셋 + rough.js
   스케치 오버레이 + sanitize
-- diagram(mermaid), annotated-code(마진 주석), data-model, api-endpoint 렌더러
-- 완료 기준: 전체 블록 셋 렌더링, 와이어프레임 라이트/다크 자동 반전
+- diagram(mermaid), annotated-code(마진 주석), data-model, api-endpoint,
+  question-form 렌더러
+- 완료 기준: 전체 블록 셋 렌더링, 와이어프레임·diagram 라이트/다크 자동 반전
 
 ### M4. 에이전트 스킬 — /plan · /recap
 

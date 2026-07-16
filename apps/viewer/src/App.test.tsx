@@ -58,10 +58,10 @@ describe('App', () => {
     const { container } = render(<App />);
     openFile(container, JSON.stringify(openedDocument('열린 계획 문서')));
     await waitFor(() => {
-      expect(screen.getByText('열린 계획 문서')).toBeInTheDocument();
+      expect(screen.getByText('열린 문서 본문')).toBeInTheDocument();
     });
+    expect(screen.getByText('열린 계획 문서')).toBeInTheDocument();
     expect(screen.getByText('열린 파일')).toBeInTheDocument();
-    expect(screen.getByText('열린 문서 본문')).toBeInTheDocument();
   });
 
   it('shows an inline error when the opened file fails validation', async () => {
@@ -80,9 +80,9 @@ describe('App', () => {
       JSON.stringify({ ...openedDocument('백분율 문서'), id: 'release-100%' }),
     );
     await waitFor(() => {
-      expect(screen.getByText('백분율 문서')).toBeInTheDocument();
+      expect(screen.getByText('열린 문서 본문')).toBeInTheDocument();
     });
-    expect(screen.getByText('열린 문서 본문')).toBeInTheDocument();
+    expect(screen.getByText('백분율 문서')).toBeInTheDocument();
   });
 
   it('routes documents whose id contains an encoded-slash literal', async () => {
@@ -92,9 +92,9 @@ describe('App', () => {
       JSON.stringify({ ...openedDocument('인코딩 문서'), id: 'feature%2Fviewer' }),
     );
     await waitFor(() => {
-      expect(screen.getByText('인코딩 문서')).toBeInTheDocument();
+      expect(screen.getByText('열린 문서 본문')).toBeInTheDocument();
     });
-    expect(screen.getByText('열린 문서 본문')).toBeInTheDocument();
+    expect(screen.getByText('인코딩 문서')).toBeInTheDocument();
   });
 
   it('routes documents whose id contains a real slash', async () => {
@@ -104,9 +104,9 @@ describe('App', () => {
       JSON.stringify({ ...openedDocument('슬래시 문서'), id: 'docs/plan-1' }),
     );
     await waitFor(() => {
-      expect(screen.getByText('슬래시 문서')).toBeInTheDocument();
+      expect(screen.getByText('열린 문서 본문')).toBeInTheDocument();
     });
-    expect(screen.getByText('열린 문서 본문')).toBeInTheDocument();
+    expect(screen.getByText('슬래시 문서')).toBeInTheDocument();
   });
 
   it('replaces the stored document when the same id is opened again', async () => {

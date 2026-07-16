@@ -1,23 +1,4 @@
-:root {
-  --wf-canvas: #f2eee8;
-  --wf-surface: #fffdf8;
-  --wf-ink: #24313b;
-  --wf-line: #8a969c;
-  --wf-muted: #68757c;
-  --wf-accent: #d8664f;
-  --wf-chrome: #e4ded5;
-  --wf-font-body: 'Chalkboard SE', 'Comic Sans MS', 'Pretendard Variable', sans-serif;
-}
-
-.dark {
-  --wf-canvas: #1d2226;
-  --wf-surface: #252b30;
-  --wf-ink: #edf1f2;
-  --wf-line: #8c9aa1;
-  --wf-muted: #b4bec2;
-  --wf-accent: #f18a6f;
-  --wf-chrome: #30383d;
-}
+@import './tokens.css';
 
 .wf-block {
   min-width: 0;
@@ -429,6 +410,58 @@
 
 .wf-surface-popover .wf-rough-frame path {
   stroke-width: 2.2;
+}
+
+.wf-diagram {
+  min-width: 0;
+}
+
+.wf-diagram__viewport {
+  max-height: min(70vh, 48rem);
+  overflow: auto;
+  border: 1px solid var(--wf-line);
+  background: var(--wf-canvas);
+}
+
+.wf-diagram__svg {
+  min-width: max-content;
+  padding: 1rem;
+}
+
+.wf-diagram__svg svg {
+  display: block;
+  max-width: none;
+}
+
+.wf-diagram__caption {
+  margin-top: 0.65rem;
+  color: var(--wf-muted);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.wf-diagram__error {
+  border: 1px dashed var(--wf-line);
+  background: var(--wf-surface);
+  padding: 1rem;
+}
+
+.wf-diagram__error-message {
+  margin: 0;
+  color: var(--wf-ink);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.wf-diagram__source {
+  max-height: 20rem;
+  margin: 0.75rem 0 0;
+  overflow: auto;
+  color: var(--wf-muted);
+  font-family: var(--wf-font-body);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
 }
 
 @media (max-width: 640px) {

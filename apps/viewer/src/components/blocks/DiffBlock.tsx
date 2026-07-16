@@ -2,10 +2,7 @@ import { useEffect, useState } from 'react';
 
 import type { DiffBlock as DiffBlockData } from '@previs/schema';
 
-type ShikiHighlighter = import('shiki').Highlighter;
-type ShikiTransformer = import('shiki').ShikiTransformer;
-
-let highlighterPromise: Promise<ShikiHighlighter> | undefined;
+import { highlightCode, type CodeHighlightTransformer } from '../../lib/highlighter';
 
 // @@ 헌크가 있으면 헌크 내부만 분류(+++/--- 파일 헤더는 헌크 밖에만 온다),
 // 없으면 발췌(excerpt)로 보고 모든 +/− 행을 분류한다.
@@ -36,7 +33,7 @@ export function classifyDiffLines(diff: string): ('add' | 'remove' | undefined)[
   });
 }
 
-function diffLineClasses(diff: string): ShikiTransformer {
+function diffLineClasses(diff: string): CodeHighlightTransformer {
   const classes = classifyDiffLines(diff);
 
   return {
@@ -50,26 +47,9 @@ function diffLineClasses(diff: string): ShikiTransformer {
   };
 }
 
-function getHighlighter() {
-  highlighterPromise ??= import('shiki').then(({ createHighlighter }) =>
-    createHighlighter({
-      langs: ['diff'],
-      themes: ['github-light', 'github-dark'],
-    }),
-  );
-
-  return highlighterPromise;
-}
-
 async function highlightDiff(diff: string): Promise<string> {
-  const highlighter = await getHighlighter();
-
-  return highlighter.codeToHtml(diff, {
+  return highlightCode(diff, {
     lang: 'diff',
-    themes: {
-      light: 'github-light',
-      dark: 'github-dark',
-    },
     transformers: [diffLineClasses(diff)],
   });
 }
@@ -81,11 +61,13 @@ export function DiffBlock({ block }: { block: DiffBlockData }) {
     let cancelled = false;
     setHighlighted(null);
 
-    highlightDiff(block.diff).then((html) => {
-      if (!cancelled) {
-        setHighlighted(html);
-      }
-    }).catch(() => undefined);
+    highlightDiff(block.diff)
+      .then((html) => {
+        if (!cancelled) {
+          setHighlighted(html);
+        }
+      })
+      .catch(() => undefined);
 
     return () => {
       cancelled = true;
