@@ -92,10 +92,14 @@ previs/
 - **문서 카드 정체성**: plan/recap 문서 카드는 DESIGN.md의 그라디언트 팔레트로
   고유 식별색을 갖는다.
 
-## 9. Data Model & Backend (예정)
+## 9. Data Model & Storage (예정)
 
-- **핵심 테이블**: documents(kind: plan|recap, 블록 JSON, 메타), comments
-  (블록 앵커, 상태), profiles.
+문서 저장은 이중 모드다. **기본은 로컬**이며 Supabase는 협업 계층(M6)이다.
+
+- **기본(로컬) 모드**: 문서는 대상 프로젝트의 `.previs/` 폴더에 JSON 파일로
+  발행된다. DB 없이 동작하며 git으로 버전 관리할 수 있다.
+- **협업(Supabase) 모드 핵심 테이블**: documents(kind: plan|recap, 블록 JSON,
+  메타), comments(블록 앵커, 상태), profiles.
 - **접근 제어**: Supabase RLS로 소유자/공유 링크/게스트 권한을 구분한다.
 - **실시간**: 코멘트는 Realtime 구독으로 라이브 갱신한다.
 - **파일**: 스크린샷 등 대용량 자산은 Storage에 저장하고 URL만 테이블에 남긴다.
@@ -103,8 +107,8 @@ previs/
 
 ## 10. Agent Integration (예정)
 
-- Claude Code 스킬 `/plan`, `/recap`이 JSON 블록 문서를 작성해 Supabase에
-  발행한다.
+- Claude Code 스킬 `/plan`, `/recap`이 JSON 블록 문서를 작성해 기본적으로
+  로컬 `.previs/` 폴더에 발행한다. 협업 모드에서는 Supabase에 발행한다.
 - recap은 git diff에서 기계적으로 블록을 도출한다 (Grounding Rule).
 - 리뷰어 코멘트는 에이전트가 조회해 코드/문서 수정에 반영한다 (피드백 루프).
 
@@ -121,14 +125,17 @@ previs/
 
 ## 12. Data Flow Diagrams
 
+실선은 기본(로컬) 모드, 점선은 협업(Supabase) 모드 흐름이다.
+
 ```mermaid
 flowchart LR
-    A[코딩 에이전트\n/plan · /recap] -->|JSON 블록 발행| B[(Supabase\nPostgres + RLS)]
-    B -->|Realtime 구독| C[뷰어 React SPA]
-    C -->|블록 렌더링| D[리뷰어]
-    D -->|블록 앵커 코멘트| B
-    B -->|코멘트 조회| A
-    A -->|코드/문서 수정| A
+    A["코딩 에이전트<br/>/plan · /recap"] -->|JSON 블록 발행| L[".previs/ 로컬 문서"]
+    L --> C["뷰어 React SPA"]
+    A -.->|협업 모드 발행| B[("Supabase<br/>Postgres + RLS")]
+    B -.->|Realtime 구독| C
+    C -->|블록 렌더링| D["리뷰어"]
+    D -.->|블록 앵커 코멘트| B
+    B -.->|코멘트 조회| A
 ```
 
 ## 13. Error Handling Strategy (예정)
@@ -147,7 +154,8 @@ flowchart LR
 - diff 내 시크릿은 절대 전사하지 않고 마스킹한다 (AGENTS.md 콘텐츠 규칙).
 - 콘텐츠는 JSON 블록이므로 뷰어에서 임의 코드 실행 경로가 없다.
   와이어프레임 HTML 조각은 sanitize 후 렌더링한다.
-- 비공개 문서는 RLS로 접근을 통제하고 기본값은 비공개다.
+- 협업 모드에서 비공개 문서는 RLS로 접근을 통제하고 기본값은 비공개다.
+  기본(로컬) 모드는 데이터가 머신 밖으로 나가지 않는다.
 
 ## 16. Deployment (미정)
 
