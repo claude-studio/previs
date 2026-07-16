@@ -90,6 +90,9 @@ feat|fix|refactor|docs|chore(스코프): 커밋 메시지
 
 ## 뷰어 UX 규칙
 
+- UI 스타일 토큰·컴포넌트 스타일은 `DESIGN.md`를 따른다. 단, DESIGN.md는 뷰어 앱
+  UI에만 적용하며 블록 콘텐츠(와이어프레임·다이어그램·diff)는 콘텐츠 규칙의
+  `--wf-*` 체계를 따른다.
 - 낙관적(optimistic) UI를 기본으로 한다: 캐시 즉시 갱신 후 에러 시 롤백.
   파괴적 작업 외에는 클릭을 막는 스피너를 쓰지 않는다.
 - 브라우저 `alert`/`confirm`/`prompt` 금지 — shadcn/ui 다이얼로그 사용.
