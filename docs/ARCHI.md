@@ -19,7 +19,8 @@ previs(previsualization)는 코딩 에이전트의 작업 계획(plan)과 작업
 
 > **현재 상태**: M1 블록 스키마·M2 읽기 전용 뷰어·M3 시각화 심화·M4
 > 에이전트 스킬(`/previs-plan` 발행 파이프라인 + `/previs-recap` diff 기계
-> 도출)이 구현됐다. 런처(M5)·협업 계층(M6)은 후속 마일스톤에서 구현한다.
+> 도출)·M5 로컬 런처(싱글턴 뷰어 서버)가 구현됐다. 협업 계층(M6)은 후속
+> 마일스톤에서 구현한다. **M5까지 완료로 "개인 도구" 1차 완성.**
 
 ## 3. Technology Stack
 
@@ -36,7 +37,7 @@ previs(previsualization)는 코딩 에이전트의 작업 계획(plan)과 작업
 | 콘텐츠 렌더링 | react-markdown(산문) + shiki(diff·annotated-code) + mermaid(diagram) + rough.js·DOMPurify(wireframe·diagram) | 확정 (M3) |
 | 백엔드        | Supabase (Auth·RLS·Realtime·Storage)                     | 예정                                            |
 | 에이전트 연동 | Claude Code 스킬 `/previs-plan`, `/previs-recap`         | 확정 (M4)                                       |
-| 로컬 런처     | Node 스크립트 (싱글턴 보장)                              | 설계 확정                                       |
+| 로컬 런처     | `@previs/launcher` — 재사용 우선 싱글턴 런처             | 확정 (M5)                                       |
 
 의존성 버전은 스캐폴딩 시 확인한 기준으로 고정하며, 변경 시 `pnpm view` 또는
 최신 공식 문서로 재확인한다 (AGENTS.md 작업 규칙).
@@ -68,16 +69,24 @@ previs/
 │   │   │   ├── blocks/ # 12종 블록별 Zod 스키마
 │   │   │   └── cli/    # doc:validate CLI (validate.ts)
 │   │   └── fixtures/ # plan/recap/kitchen-sink 샘플 문서
-│   └── recap/       # @previs/recap — git diff → recap 블록 기계 도출
+│   ├── recap/       # @previs/recap — git diff → recap 블록 기계 도출
+│   │   └── src/
+│   │       ├── git.ts        # git 서브프로세스 경계
+│   │       ├── source.ts     # diff 소스 해석 (auto/range/staged/worktree)
+│   │       ├── inventory.ts  # name-status/numstat → file-tree
+│   │       ├── excerpt.ts    # 발췌·budget·랭킹
+│   │       ├── masking.ts    # 시크릿 마스킹
+│   │       ├── manifest.ts   # skip 판정·통계
+│   │       ├── derive.ts     # 도출 오케스트레이션·out-of-line patch
+│   │       └── cli/          # recap:derive CLI (derive.ts)
+│   └── launcher/    # @previs/launcher — 재사용 우선 싱글턴 뷰어 런처
 │       └── src/
-│           ├── git.ts        # git 서브프로세스 경계
-│           ├── source.ts     # diff 소스 해석 (auto/range/staged/worktree)
-│           ├── inventory.ts  # name-status/numstat → file-tree
-│           ├── excerpt.ts    # 발췌·budget·랭킹
-│           ├── masking.ts    # 시크릿 마스킹
-│           ├── manifest.ts   # skip 판정·통계
-│           ├── derive.ts     # 도출 오케스트레이션·out-of-line patch
-│           └── cli/          # recap:derive CLI (derive.ts)
+│           ├── paths.ts      # 포트·락·docsDir 유도 (targetKey=canonical docsDir)
+│           ├── lock.ts       # 원자적 락·phase 유니언·stale 복구
+│           ├── port.ts       # 전용 대역 포트 탐색·정체 채택
+│           ├── health.ts     # /api/viewer-info 조회·재사용 판정
+│           ├── launch.ts     # 재사용 우선 오케스트레이션·프로세스 그룹 정리
+│           └── cli/          # viewer:up CLI (up.ts)
 └── docs/            # TRIP 워크플로우 문서
     ├── 1-plans/     # 기능 계획 문서
     ├── 2-changelog/ # 버전 체인지로그
@@ -95,7 +104,7 @@ apps/viewer/
 ├── package.json             # @previs/viewer, Vite·Tailwind 툴체인
 ├── vite.config.ts           # React·Tailwind·발행 문서 API 플러그인, previs 전용 포트
 ├── vitest.config.ts         # jsdom 테스트 환경
-├── server/                  # previs-docs-plugin — /api/documents (.previs 서빙)
+├── server/                  # previs-docs-plugin(/api/documents) + previs-runtime-plugin(/api/viewer-info·유휴 종료·락 정리)
 ├── shared/                  # 서버·클라이언트 공유 API 페이로드 타입
 └── src/
     ├── App.tsx              # 목록·문서 뷰 라우팅과 origin별 문서 상태 병합
@@ -130,8 +139,10 @@ apps/viewer/
 - recap 도출: `pnpm recap:derive --out <manifest> [--range|--staged|--worktree]`
   — `@previs/recap` CLI가 git diff에서 file-tree·diff 블록과 통계·skip
   판정을 산출한다 (`/previs-recap` 스킬이 사용).
-- `@previs/schema`·`@previs/recap`은 plain `tsc`로 ESM·선언 파일을 `dist/`에
-  산출한다.
+- 뷰어 기동: `pnpm viewer:up` — `@previs/launcher` CLI가 뷰어를 재사용 우선으로
+  기동하고 로컬 URL을 출력한다 (스킬이 발행 후 호출).
+- `@previs/schema`·`@previs/recap`·`@previs/launcher`는 plain `tsc`로 ESM·선언
+  파일을 `dist/`에 산출한다(테스트는 `tsconfig.build.json`에서 제외).
 - 공통 설정은 `tsconfig.base.json`, `eslint.config.ts`, `vitest.config.ts`에 둔다.
 
 ## 7. Configuration
@@ -208,16 +219,32 @@ apps/viewer/
 - 리뷰어 코멘트는 에이전트가 조회해 코드/문서 수정에 반영한다
   (피드백 루프, M6 예정).
 
-## 11. Local Launcher (설계 확정)
+## 11. Local Launcher (M5 구현)
 
-- SessionStart 훅 기동 금지. 스킬 호출 시점에 재사용 우선으로 기동.
-- `/api/viewer-info` 헬스 엔드포인트로 정체 확인 후 재사용 판단.
-- 원자적 락(`fs.open(lockPath, 'wx')`)으로 동시 기동 경쟁 차단.
-- 유휴 30분 자동 종료.
-- **전용 포트 대역 `47738~47801`**: `47738 + (프로젝트 경로 해시 % 64)`로 유도.
-  흔한 개발 포트(3000/5173/8080 등)와의 충돌·오탐을 피하기 위한 유니크 대역으로,
-  잘 알려진 서비스가 없고 macOS ephemeral 대역(49152+) 밖이며 BACnet(47808)을
-  피한다. 점유 시 대역 내 +1 상향 탐색, 확정 포트는 락 파일에 기록.
+`@previs/launcher`가 `pnpm viewer:up`(스킬이 발행 후 호출)로 뷰어 dev 서버를
+재사용 우선 기동한다. SessionStart 훅 기동은 하지 않는다.
+
+- **정체 단일 키**: `targetKey` = canonical docsDir(`PREVIS_DOCS_DIR` 오버라이드,
+  미존재 경로 안전 정규화). 포트·락 파생, `/api/viewer-info`의 `docsDir`, 재사용
+  비교가 모두 이 키를 공유해 "무엇을 서빙하는가"가 곧 싱글턴 정체다. `vite.config`도
+  같은 유도를 써 standalone(`pnpm dev`)과 런처 포트가 일치한다.
+- **재사용 우선 흐름**: 락 재사용(`/api/viewer-info` 정체·docsDir 일치) → 채택
+  (락 없이 뜬 동일 뷰어를 대역 스캔 중 정체 확인해 adopt) → 콜드스타트 spawn.
+  다중 세션 동시 호출에서도 프로세스 1개를 보장한다.
+- **원자적 락**: `fs.open(lockPath, 'wx')`(OS temp). `starting`/`running` phase
+  판별 유니언이며 `running.pid`는 Vite 자신의 pid(런타임 플러그인 정리 소유권
+  일치). 확정 포트를 락에 기록. stale(소유 pid 사망) 정리는 별도 복구 락으로
+  TOCTOU를 차단한다.
+- **런타임 플러그인**: dev 서버 내부 `previs-runtime-plugin`이 `/api/viewer-info`
+  정체 응답, 활동 스탬프(`enforce:'pre'`), 유휴 30분 자동 종료, 종료 시 동기·
+  소유권 확인 락 정리를 담당한다(`PREVIS_LOCK_PATH` 미설정 시 비활성).
+- **프로세스 정리**: detached 프로세스 그룹으로 기동하고, 실패 시 그룹 전체
+  SIGTERM→SIGKILL·생존 폴링 후에만 소유 락을 제거해 고아 Vite를 막는다.
+- **전용 포트 대역 `47738~47801`**: `47738 + (해시 % 64)`로 유도. 흔한 개발
+  포트(3000/5173/8080 등)와의 충돌·오탐을 피하는 유니크 대역으로, macOS
+  ephemeral 대역(49152+) 밖이며 BACnet(47808)을 피한다. 후보 포트가 외부
+  프로세스에 점유되면 대역 내 +1 상향 탐색하고 `PREVIS_PORT`로 넘겨
+  `strictPort`로 기동한다(대역 이탈 방지).
 
 ## 12. Data Flow Diagrams
 

@@ -3,8 +3,8 @@
 > 코딩 에이전트의 작업 계획(plan)과 작업 회고(recap)를 사람이 검토하기 좋은
 > 인터랙티브 비주얼 문서로 만들어주는 도구.
 
-**Version**: 0.5.0 (M4 완료 — 에이전트 스킬: `/previs-plan` 발행 파이프라인 +
-`/previs-recap` git diff 기계 도출)
+**Version**: 0.6.0 (M5 완료 — 로컬 런처: 재사용 우선 싱글턴 뷰어 서버.
+"개인 도구" 1차 완성)
 
 ## 무엇을 하나
 
@@ -44,8 +44,12 @@ pnpm build     # 패키지별 tsc 빌드
 - [`packages/recap`](packages/recap) — git diff에서 recap 블록을 기계
   도출하는 CLI. `pnpm recap:derive --out <manifest>`로 실행
   (`/previs-recap` 스킬이 사용)
-- [`apps/viewer`](apps/viewer) — 로컬 JSON 문서 뷰어. `pnpm --filter
-  @previs/viewer dev`로 실행 (previs 전용 포트 대역 47738~47801)
+- [`packages/launcher`](packages/launcher) — 재사용 우선 싱글턴 뷰어 런처.
+  `pnpm viewer:up`으로 실행 (이미 떠 있으면 URL 재사용, 없으면 백그라운드
+  기동, 다중 세션 동시 호출에도 프로세스 1개 보장)
+- [`apps/viewer`](apps/viewer) — 로컬 JSON 문서 뷰어. 보통 `pnpm viewer:up`
+  으로 기동하며(previs 전용 포트 대역 47738~47801), 직접 실행은 `pnpm --filter
+  @previs/viewer dev`
 
 ## 개발 워크플로우
 

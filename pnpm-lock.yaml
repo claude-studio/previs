@@ -118,6 +118,8 @@ importers:
         specifier: 8.1.4
         version: 8.1.4(@types/node@22.20.1)(jiti@2.7.0)
 
+  packages/launcher: {}
+
   packages/recap:
     dependencies:
       '@previs/schema':

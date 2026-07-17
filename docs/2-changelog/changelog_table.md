@@ -4,6 +4,7 @@
 
 | Version | Week | Commit Message                                          |
 | ------- | ---- | ------------------------------------------------------- |
+| `0.6.0` | 1    | feat(launcher): 싱글턴 뷰어 런처 — 재사용 우선 기동·정체 엔드포인트·유휴 종료 (M5 완료) |
 | `0.5.0` | 1    | feat(recap): /previs-recap — diff 기계 도출 파이프라인 (M4 2/2 완료) |
 | `0.4.1` | 1    | feat(skills): 로컬 발행 파이프라인·/previs-plan — 에이전트 스킬 1/2 (M4) |
 | `0.4.0` | 1    | feat(viewer): 잔여 블록 렌더러 — 손그림 계층 2/2 (M3 완료) |
@@ -13,6 +14,15 @@
 | `0.1.0` | 1    | chore: TRIP 워크플로우 초기화                     |
 
 # Changelog Summary
+
+- **v0.6.0 (M5: 로컬 런처 — 싱글턴 뷰어 서버 - Week 1, 18-07-2026)**:
+  - **@previs/launcher (신규 패키지)**: 재사용 우선 싱글턴 런처. 원자적 락(`fs.open wx`) + `/api/viewer-info` 헬스체크로 다중 세션 동시 호출에서도 프로세스 1개 보장
+  - **정체 단일 키**: `targetKey` = canonical docsDir(`PREVIS_DOCS_DIR` 오버라이드)로 포트·락·재사용 비교 통일, standalone·런처 포트 일치
+  - **포트 채택**: 전용 대역(`47738~47801`) 점유 포트를 정체 확인해 우리 뷰어면 adopt(락 없이 뜬 동일 뷰어 중복 기동 방지), 외부면 +1
+  - **락 수명주기**: `starting`/`running` phase 유니언(`running.pid`=Vite pid), phase별 stale 판정, 복구 락으로 stale 정리 TOCTOU 차단
+  - **런타임 플러그인**: `/api/viewer-info`·활동 스탬프(`enforce:'pre'`)·유휴 30분 종료·종료 시 동기 소유권 확인 락 정리
+  - **프로세스 안전**: detached 그룹 기동, 실패 시 그룹 SIGTERM/SIGKILL·생존 폴링 후 락 제거(고아 Vite 방지)
+  - **통합**: `PREVIS_PORT` 런처 권위(`strictPort`), 루트 `pnpm viewer:up`, 두 스킬 런처 호출로 교체, 테스트 36건 추가(총 281건)
 
 - **v0.5.0 (M4 2/2: /previs-recap — diff 기계 도출 파이프라인 - Week 1, 17-07-2026)**:
   - **@previs/recap CLI**: git diff → file-tree·diff 블록 기계 도출(Grounding·Budget·마스킹을 코드로 강제), 서사·와이어프레임만 스킬이 작성하는 하이브리드

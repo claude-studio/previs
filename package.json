@@ -1,6 +1,6 @@
 {
   "name": "previs",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@10.33.0",
@@ -14,6 +14,7 @@
     "build": "pnpm -r build",
     "doc:validate": "pnpm --filter @previs/schema build && node packages/schema/dist/cli/validate.js",
     "recap:derive": "pnpm --filter @previs/recap... build && node packages/recap/dist/cli/derive.js",
+    "viewer:up": "pnpm --filter @previs/launcher build && node packages/launcher/dist/cli/up.js",
     "format": "prettier --write ."
   },
   "devDependencies": {

@@ -6,27 +6,30 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
 import { previsDocsPlugin } from './server/previs-docs-plugin';
+import { previsRuntimePlugin } from './server/previs-runtime-plugin';
+import viewerPackage from './package.json';
+import { resolveTarget } from '../../packages/launcher/src/paths';
 
-const PORT_START = 47738;
-const PORT_COUNT = 64;
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const target = resolveTarget(process.env, projectRoot);
+const configuredPort = process.env.PREVIS_PORT?.trim();
+const port = configuredPort ? Number(configuredPort) : target.candidatePort;
 
-function hashPath(value: string): number {
-  let hash = 5381;
-
-  for (const character of value) {
-    hash = (hash * 33) ^ character.charCodeAt(0);
-  }
-
-  return hash >>> 0;
-}
-
-function viewerPort(): number {
-  return PORT_START + (hashPath(projectRoot) % PORT_COUNT);
+if (!Number.isInteger(port) || port < 1 || port > 65535) {
+  throw new Error(`PREVIS_PORT가 올바른 포트가 아닙니다: ${configuredPort}`);
 }
 
 export default defineConfig({
-  plugins: [react(), tailwindcss(), previsDocsPlugin(projectRoot)],
+  plugins: [
+    react(),
+    tailwindcss(),
+    previsRuntimePlugin({
+      docsDir: target.docsDir,
+      version: viewerPackage.version,
+      lockPath: process.env.PREVIS_LOCK_PATH,
+    }),
+    previsDocsPlugin(projectRoot),
+  ],
   resolve: {
     alias: [
       {
@@ -37,7 +40,7 @@ export default defineConfig({
   },
   server: {
     host: '127.0.0.1',
-    port: viewerPort(),
-    strictPort: false,
+    port,
+    strictPort: Boolean(configuredPort),
   },
 });
