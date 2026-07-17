@@ -3,8 +3,8 @@
 > 코딩 에이전트의 작업 계획(plan)과 작업 회고(recap)를 사람이 검토하기 좋은
 > 인터랙티브 비주얼 문서로 만들어주는 도구.
 
-**Version**: 0.4.1 (M4 1/2 — 로컬 발행 파이프라인: `.previs/` 발행 →
-`/api/documents` 서빙 → 뷰어 로드, `/previs-plan` 스킬)
+**Version**: 0.5.0 (M4 완료 — 에이전트 스킬: `/previs-plan` 발행 파이프라인 +
+`/previs-recap` git diff 기계 도출)
 
 ## 무엇을 하나
 
@@ -41,6 +41,9 @@ pnpm build     # 패키지별 tsc 빌드
 
 - [`packages/schema`](packages/schema) — 블록 JSON 스키마 (스킬·뷰어·저장
   계층이 공유하는 계약)
+- [`packages/recap`](packages/recap) — git diff에서 recap 블록을 기계
+  도출하는 CLI. `pnpm recap:derive --out <manifest>`로 실행
+  (`/previs-recap` 스킬이 사용)
 - [`apps/viewer`](apps/viewer) — 로컬 JSON 문서 뷰어. `pnpm --filter
   @previs/viewer dev`로 실행 (previs 전용 포트 대역 47738~47801)
 

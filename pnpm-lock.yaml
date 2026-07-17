@@ -118,6 +118,16 @@ importers:
         specifier: 8.1.4
         version: 8.1.4(@types/node@22.20.1)(jiti@2.7.0)
 
+  packages/recap:
+    dependencies:
+      '@previs/schema':
+        specifier: workspace:*
+        version: link:../schema
+    devDependencies:
+      '@types/node':
+        specifier: ^22.20.1
+        version: 22.20.1
+
   packages/schema:
     dependencies:
       zod:

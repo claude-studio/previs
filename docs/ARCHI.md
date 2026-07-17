@@ -17,9 +17,9 @@ previs(previsualization)는 코딩 에이전트의 작업 계획(plan)과 작업
 - **recap** — 구현 완료 후 PR/브랜치/diff를 변경의 "형태"로 요약해 raw diff
   이전의 리뷰 진입점을 제공한다.
 
-> **현재 상태**: M1 블록 스키마·M2 읽기 전용 뷰어·M3 시각화 심화·M4 1차
-> 사이클(로컬 발행 파이프라인·`/previs-plan` 스킬)이 구현됐다.
-> `/previs-recap`·런처·협업 계층은 후속 마일스톤에서 구현한다.
+> **현재 상태**: M1 블록 스키마·M2 읽기 전용 뷰어·M3 시각화 심화·M4
+> 에이전트 스킬(`/previs-plan` 발행 파이프라인 + `/previs-recap` diff 기계
+> 도출)이 구현됐다. 런처(M5)·협업 계층(M6)은 후속 마일스톤에서 구현한다.
 
 ## 3. Technology Stack
 
@@ -28,13 +28,14 @@ previs(previsualization)는 코딩 에이전트의 작업 계획(plan)과 작업
 | 모노레포      | pnpm workspace (pnpm 10.33.0)                            | 확정                                            |
 | 공통 툴체인   | TypeScript 6.0.3·ESLint 10.7.0·Prettier 3.9.5            | 확정                                            |
 | 블록 스키마   | `@previs/schema`·Zod 4.4.3                               | 확정                                            |
+| recap 도출    | `@previs/recap` — git diff → 블록 CLI                    | 확정 (M4 2/2)                                   |
 | 테스트        | Vitest 4.1.10                                            | 확정                                            |
 | 뷰어          | React SPA (TypeScript, Vite)                             | 확정 (M2)                                       |
 | UI 프리미티브 | shadcn/ui + Tabler Icons                                 | 확정 (M2)                                       |
 | 스타일 토큰   | DESIGN.md (MiniMax 기반) + Tailwind CSS 변수 매핑        | 명세 확정                                       |
 | 콘텐츠 렌더링 | react-markdown(산문) + shiki(diff·annotated-code) + mermaid(diagram) + rough.js·DOMPurify(wireframe·diagram) | 확정 (M3) |
 | 백엔드        | Supabase (Auth·RLS·Realtime·Storage)                     | 예정                                            |
-| 에이전트 연동 | Claude Code 스킬 `/previs-plan`, `/previs-recap`         | `/previs-plan` 확정 (M4 1/2), recap 예정        |
+| 에이전트 연동 | Claude Code 스킬 `/previs-plan`, `/previs-recap`         | 확정 (M4)                                       |
 | 로컬 런처     | Node 스크립트 (싱글턴 보장)                              | 설계 확정                                       |
 
 의존성 버전은 스캐폴딩 시 확인한 기준으로 고정하며, 변경 시 `pnpm view` 또는
@@ -55,18 +56,28 @@ previs/
 ├── tsconfig.base.json
 ├── eslint.config.ts
 ├── vitest.config.ts
-├── skills/          # 제품 스킬 소스 (previs-plan) — M7 패키징 단위
+├── skills/          # 제품 스킬 소스 (previs-plan, previs-recap) — M7 패키징 단위
 ├── .claude/skills/  # skills/ 심링크 — 이 리포에서 도그푸딩
 ├── .previs/         # 로컬 발행 문서 (JSON, git 추적)
 ├── packages/
-│   └── schema/      # @previs/schema — 블록·문서 스키마 단일 진실 원천
-│       ├── src/
-│       │   ├── index.ts
-│       │   ├── document.ts
-│       │   ├── block.ts
-│       │   ├── blocks/ # 12종 블록별 Zod 스키마
-│       │   └── cli/    # doc:validate CLI (validate.ts)
-│       └── fixtures/ # plan/recap/kitchen-sink 샘플 문서
+│   ├── schema/      # @previs/schema — 블록·문서 스키마 단일 진실 원천
+│   │   ├── src/
+│   │   │   ├── index.ts
+│   │   │   ├── document.ts
+│   │   │   ├── block.ts
+│   │   │   ├── blocks/ # 12종 블록별 Zod 스키마
+│   │   │   └── cli/    # doc:validate CLI (validate.ts)
+│   │   └── fixtures/ # plan/recap/kitchen-sink 샘플 문서
+│   └── recap/       # @previs/recap — git diff → recap 블록 기계 도출
+│       └── src/
+│           ├── git.ts        # git 서브프로세스 경계
+│           ├── source.ts     # diff 소스 해석 (auto/range/staged/worktree)
+│           ├── inventory.ts  # name-status/numstat → file-tree
+│           ├── excerpt.ts    # 발췌·budget·랭킹
+│           ├── masking.ts    # 시크릿 마스킹
+│           ├── manifest.ts   # skip 판정·통계
+│           ├── derive.ts     # 도출 오케스트레이션·out-of-line patch
+│           └── cli/          # recap:derive CLI (derive.ts)
 └── docs/            # TRIP 워크플로우 문서
     ├── 1-plans/     # 기능 계획 문서
     ├── 2-changelog/ # 버전 체인지로그
@@ -116,7 +127,11 @@ apps/viewer/
 - 루트 검증 명령: `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`
 - 문서 검증: `pnpm doc:validate <file>` — `@previs/schema` CLI로 발행 문서를
   safeParse 게이트에 통과시킨다 (스킬 발행 루프가 사용).
-- `@previs/schema`는 plain `tsc`로 ESM·선언 파일을 `dist/`에 산출한다.
+- recap 도출: `pnpm recap:derive --out <manifest> [--range|--staged|--worktree]`
+  — `@previs/recap` CLI가 git diff에서 file-tree·diff 블록과 통계·skip
+  판정을 산출한다 (`/previs-recap` 스킬이 사용).
+- `@previs/schema`·`@previs/recap`은 plain `tsc`로 ESM·선언 파일을 `dist/`에
+  산출한다.
 - 공통 설정은 `tsconfig.base.json`, `eslint.config.ts`, `vitest.config.ts`에 둔다.
 
 ## 7. Configuration
@@ -167,7 +182,7 @@ apps/viewer/
 - **파일**: 스크린샷 등 대용량 자산은 Storage에 저장하고 URL만 테이블에 남긴다.
 - **마이그레이션**: additive만 허용 (AGENTS.md 데이터 규칙).
 
-## 10. Agent Integration (1/2 구현)
+## 10. Agent Integration (M4 구현)
 
 - Claude Code 스킬 `/previs-plan`, `/previs-recap`이 JSON 블록 문서를
   작성해 기본적으로 로컬 `.previs/` 폴더에 발행한다. 협업 모드(M6 예정)
@@ -179,8 +194,17 @@ apps/viewer/
   파일을 쓰는 워크플로우이므로 `disable-model-invocation: true`로 명시 호출
   전용. 이번 사이클 발행 대상은 previs 리포 도그푸딩으로 한정하며 외부
   프로젝트 핸드오프는 M5 런처에서 설계한다.
-- **`/previs-recap` (예정, M4 2/2)**: git diff에서 기계적으로 블록을
-  도출한다 (Grounding Rule).
+- **`/previs-recap` (구현)**: 스킬 소스는 `skills/previs-recap/SKILL.md`이며
+  `.claude/skills/` 심링크로 도그푸딩한다. 구조화 블록(file-tree·diff)은
+  `@previs/recap` CLI가 git diff에서 기계 도출해 Grounding·Budget·시크릿
+  마스킹을 코드로 강제하고, 서사·와이어프레임·리스크 판단만 스킬이 작성하는
+  하이브리드다. diff 소스는 auto(merge-base·논리적 브랜치 동치·더티 게이트)와
+  `--range`/`--staged`/`--worktree` 오버라이드를 지원한다. 마스킹된 전체
+  patch는 out-of-line(`<manifest>.patches/`)에 두고 manifest엔 경로만 남긴다.
+  recap 표준 골격(wireframe/diagram → prose → data-model/api-endpoint →
+  file-tree → Key changes 탭) 조립 후 `pnpm doc:validate`로 검증한다. plan
+  스킬과 동일하게 `disable-model-invocation: true` 명시 호출 전용이며 발행
+  대상은 previs 리포 도그푸딩으로 한정한다.
 - 리뷰어 코멘트는 에이전트가 조회해 코드/문서 수정에 반영한다
   (피드백 루프, M6 예정).
 
@@ -222,9 +246,11 @@ flowchart LR
 
 - 테스트 프레임워크: Vitest 4.1.10
 - 루트 `vitest.config.ts`는 `packages/*`와 `apps/*`를 프로젝트로 탐색한다.
-  스키마 패키지는 Node 환경(`packages/schema/vitest.config.ts`), 뷰어는
-  jsdom 환경(`apps/viewer/vitest.config.ts`)을 사용한다.
-- 테스트는 소스 파일 옆에 콜로케이션한다.
+  스키마·recap 패키지는 Node 환경, 뷰어는 jsdom 환경
+  (`apps/viewer/vitest.config.ts`)을 사용한다.
+- 테스트는 소스 파일 옆에 콜로케이션한다. recap의 파싱·발췌·마스킹은 캡처된
+  git 출력 픽스처 기반 순수 함수 테스트로, git 실행은 임시 리포 통합
+  테스트(`derive.integration.test.ts`)에 격리한다.
 - 우선순위: 블록 스키마 검증 > diff→블록 도출 로직 > 렌더러 스냅샷.
 
 ## 15. Security Considerations

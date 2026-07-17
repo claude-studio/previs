@@ -4,6 +4,7 @@
 
 | Version | Week | Commit Message                                          |
 | ------- | ---- | ------------------------------------------------------- |
+| `0.5.0` | 1    | feat(recap): /previs-recap — diff 기계 도출 파이프라인 (M4 2/2 완료) |
 | `0.4.1` | 1    | feat(skills): 로컬 발행 파이프라인·/previs-plan — 에이전트 스킬 1/2 (M4) |
 | `0.4.0` | 1    | feat(viewer): 잔여 블록 렌더러 — 손그림 계층 2/2 (M3 완료) |
 | `0.3.1` | 1    | feat(viewer): 와이어프레임 렌더러 — 손그림 계층 1/2 (M3) |
@@ -12,6 +13,13 @@
 | `0.1.0` | 1    | chore: TRIP 워크플로우 초기화                     |
 
 # Changelog Summary
+
+- **v0.5.0 (M4 2/2: /previs-recap — diff 기계 도출 파이프라인 - Week 1, 17-07-2026)**:
+  - **@previs/recap CLI**: git diff → file-tree·diff 블록 기계 도출(Grounding·Budget·마스킹을 코드로 강제), 서사·와이어프레임만 스킬이 작성하는 하이브리드
+  - **diff 소스**: auto(논리적 브랜치 동치·더티 게이트·`merge-base..HEAD`) + `--range`/`--staged`/`--worktree`(untracked `--no-index` 합성 patch 포함)
+  - **발췌·마스킹**: hunk 단위 ~148줄 budget 절단, churn 랭킹·lockfile 강등, 토큰 접두·PEM·.env·시크릿 할당(JSON 키·공백 값) 마스킹, 전체 patch는 out-of-line
+  - **스키마**: `source.mode` optional enum 추가(additive), skip 판정·`errors` 발행 중단·`--out` 필수, 루트 `pnpm recap:derive`
+  - **/previs-recap 스킬**: recap 표준 골격 조립·doc:validate 루프·명시 호출 전용, recap 63건 추가(총 245건), E2E `v0.3.0..v0.4.1` 도출→조립→검증
 
 - **v0.4.1 (M4 1/2: Local Publish Pipeline & /previs-plan - Week 1, 16-07-2026)**:
   - **발행 서빙 API**: `/api/documents` Vite 플러그인 — `.previs/*.json` raw 서빙 (`PREVIS_DOCS_DIR` 오버라이드, 깨진 JSON errors 보고), 검증은 클라이언트 경계 유지

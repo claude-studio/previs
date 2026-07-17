@@ -7,6 +7,7 @@ import type { TabsBlock } from './blocks/tabs.js';
 const sourceSchema = z.object({
   branch: z.string().min(1).optional(),
   commitRange: z.string().min(1).optional(),
+  mode: z.enum(['range', 'staged', 'worktree']).optional(),
   pr: z.union([z.number().int().positive(), z.string().min(1)]).optional(),
 });
 

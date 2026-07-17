@@ -54,15 +54,18 @@ previs의 정체성인 `--wf-*` 손그림 체계 구현.
   question-form 렌더러
 - 완료 기준: 전체 블록 셋 렌더링, 와이어프레임·diagram 라이트/다크 자동 반전
 
-### M4. 에이전트 스킬 — /previs-plan · /previs-recap
+### M4. 에이전트 스킬 — /previs-plan · /previs-recap — ✅ 완료 (v0.5.0)
 
 에이전트가 문서를 생성하는 파이프라인.
 
-- `/previs-plan`: 계획을 블록 문서로 생성 (승인 게이트 워크플로우)
-- `/previs-recap`: git diff에서 기계적으로 블록 도출 (Grounding Rule, Budget,
-  시크릿 마스킹, Recap 표준 골격, Skip 조건)
+- `/previs-plan` (v0.4.1): 계획을 블록 문서로 생성 (승인 게이트 워크플로우)
+- `/previs-recap` (v0.5.0): git diff에서 기계적으로 블록 도출 — `@previs/recap`
+  CLI가 file-tree·diff 블록을 산출해 Grounding·Budget·시크릿 마스킹을 코드로
+  강제하고, 서사·와이어프레임만 스킬이 작성 (하이브리드). Recap 표준 골격,
+  Skip 조건 포함
 - 로컬 발행: `.previs/` 문서 폴더 → 뷰어가 로드
-- 완료 기준: 실제 diff로 recap 생성 → 뷰어 확인 E2E 시나리오 통과
+- 완료 기준: 실제 diff로 recap 생성 → 뷰어 확인 E2E 시나리오 통과 ✅
+  (`v0.3.0..v0.4.1` 실범위 도출 → 블록 조립 → doc:validate 통과)
 
 ### M5. 로컬 런처 — 싱글턴 서버
 

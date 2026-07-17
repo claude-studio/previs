@@ -42,6 +42,27 @@ describe('previsDocumentSchema', () => {
     expect(result.success).toBe(true);
   });
 
+  it.each(['range', 'staged', 'worktree'])('accepts source.mode "%s"', (mode) => {
+    const result = previsDocumentSchema.safeParse(
+      doc([prose('p1')], { kind: 'recap', source: { branch: 'feat/foo', mode } }),
+    );
+    expect(result.success).toBe(true);
+  });
+
+  it('accepts source without mode (backward compatible)', () => {
+    const result = previsDocumentSchema.safeParse(
+      doc([prose('p1')], { kind: 'recap', source: { branch: 'feat/foo' } }),
+    );
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects an unknown source.mode', () => {
+    const result = previsDocumentSchema.safeParse(
+      doc([prose('p1')], { kind: 'recap', source: { mode: 'rebase' } }),
+    );
+    expect(result.success).toBe(false);
+  });
+
   it('rejects empty blocks', () => {
     expect(previsDocumentSchema.safeParse(doc([])).success).toBe(false);
   });
